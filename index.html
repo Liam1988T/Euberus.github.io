@@ -3,55 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euberus Stream - Music Player</title>
+    <title>Euberus Cloud Stream</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --panel-color: #1e293b;
-            --accent-color: #38bdf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --track-hover: #334155;
-            --active-toggle: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .dashboard { width: 100%; max-width: 900px; background-color: var(--panel-color); border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow: hidden; display: flex; flex-direction: column; }
-        .header { padding: 30px; background: linear-gradient(to right, #0284c7, #0369a1); display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 24px; font-weight: 600; }
-        .stats-summary { font-size: 14px; background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; }
-        .content-area { display: grid; grid-template-columns: 1fr; padding: 20px; gap: 20px; }
-        @media (min-width: 768px) { .content-area { grid-template-columns: 1.5fr 1fr; } }
-        .playlist-container { display: flex; flex-direction: column; gap: 10px; }
-        .section-title { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
-        .track-list { list-style: none; max-height: 400px; overflow-y: auto; }
-        .track-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 8px; background-color: rgba(255, 255, 255, 0.02); }
-        .track-item:hover { background-color: var(--track-hover); }
-        .track-item.active { background-color: rgba(56, 189, 248, 0.15); border-left: 4px solid var(--accent-color); }
-        .track-info { display: flex; flex-direction: column; gap: 4px; }
-        .track-title { font-weight: 500; font-size: 15px; }
-        .track-artist { font-size: 13px; color: var(--text-muted); }
-        .play-count-badge { background-color: #1e293b; border: 1px solid #475569; color: var(--accent-color); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-        .now-playing-panel { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); }
-        .album-art-placeholder { width: 140px; height: 140px; background: linear-gradient(135deg, #334155, #1e293b); border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; }
-        .album-art-placeholder::after { content: "🎵"; font-size: 45px; }
-        .current-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-        .current-artist { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
-        
-        .controls-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .button-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 50px; }
-        
-        button { cursor: pointer; border: none; font-weight: 600; transition: all 0.2s; }
-        .play-btn { background: var(--accent-color); color: #0f172a; padding: 12px 24px; border-radius: 50px; font-size: 14px; width: 110px; }
-        .play-btn:hover { background: #7dd3fc; }
-        
-        .nav-btn { background: #334155; color: var(--text-main); padding: 10px 16px; border-radius: 8px; font-size: 12px; visibility: hidden; }
-        .nav-btn:hover { background: #475569; }
-        
-        .repeat-btn { background: #1e293b; border: 1px solid #475569; color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 12px; }
-        .repeat-btn.active { background: rgba(16, 185, 129, 0.15); border-color: var(--active-toggle); color: var(--active-toggle); }
-        
-        #yt-engine { width: 1px; height: 1px; position: absolute; left: -9999px; opacity: 0; }
+        :root { --bg-color: #0f172a; --panel-color: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
+        .dashboard { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .track-item { padding: 15px; border-bottom: 1px solid #334155; cursor: pointer; display: flex; justify-content: space-between; }
+        .track-item:hover { background: #334155; }
+        .active { border-left: 4px solid var(--accent-color); background: rgba(56, 189, 248, 0.1); }
+        button { cursor: pointer; padding: 10px 20px; border-radius: 20px; border: none; background: var(--accent-color); font-weight: bold; }
+        #yt-engine { position: absolute; left: -9999px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -60,41 +22,16 @@
 <body>
 
 <div class="dashboard">
-    <div class="header">
-        <div>
-            <h1>Euberus Cloud Player</h1>
-            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v3.0.0-Cloud</span>
-        </div>
-        <div class="stats-summary" id="global-counter">Total Session Plays: 0</div>
-    </div>
-
-    <div class="content-area">
-        <div class="playlist-container">
-            <div class="section-title">Available Tracks</div>
-            <ul class="track-list" id="playlist"></ul>
-        </div>
-
-        <div class="now-playing-panel">
-            <div class="album-art-placeholder"></div>
-            <div class="current-title" id="current-title">Select a track</div>
-            <div class="current-artist" id="current-artist">Choose a song to start listening</div>
-            
-            <div class="controls-wrapper">
-                <div class="button-row">
-                    <button class="nav-btn" id="prev-btn" onclick="playPrevious()">⏮ PREV</button>
-                    <button class="play-btn" id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
-                    <button class="nav-btn" id="next-btn" onclick="playNext()">NEXT ⏭</button>
-                </div>
-                <button class="repeat-btn" id="repeat-toggle" onclick="toggleRepeat()">🔁 Repeat: OFF</button>
-            </div>
-        </div>
+    <h2 style="margin-bottom: 20px; color: var(--accent-color);">Live Cloud Library</h2>
+    <ul id="playlist"></ul>
+    <div style="margin-top:20px; text-align:center;">
+        <button id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
     </div>
 </div>
 
 <div id="yt-engine"></div>
 
 <script>
-    // Live Firebase Credentials
     const firebaseConfig = {
         apiKey: "AIzaSyAYnsN9UWtkBxLYTgbe21tpIczGhrni7T8",
         authDomain: "euberus-ed3b4.firebaseapp.com",
@@ -102,160 +39,51 @@
         projectId: "euberus-ed3b4",
         storageBucket: "euberus-ed3b4.firebasestorage.app",
         messagingSenderId: "206163602431",
-        appId: "1:206163602431:web:70247c1e16d7faae8d95ca",
-        measurementId: "G-KQD0965JJL"
+        appId: "1:206163602431:web:70247c1e16d7faae8d95ca"
     };
 
-    // Connect Engine
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const songsRef = database.ref('songs');
-
+    const songsRef = firebase.database().ref('songs');
     let songsDatabase = [];
-    const playlistUI = document.getElementById('playlist');
-    const currentTitleUI = document.getElementById('current-title');
-    const currentArtistUI = document.getElementById('current-artist');
-    const globalCounterUI = document.getElementById('global-counter');
-    const masterBtn = document.getElementById('master-play-trigger');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const repeatBtn = document.getElementById('repeat-toggle');
-
-    let currentTrackIndex = -1;
     let playerEngine = null;
-    let isPlaying = false;
-    let isRepeatMode = false;
+    let currentIdx = 0;
 
-    // Direct Cloud Real-time Observer Node
-    songsRef.on('value', (snapshot) => {
+    // Force data fetch
+    songsRef.once('value').then(snapshot => {
         const data = snapshot.val();
-        songsDatabase = [];
-        if (data) {
-            Object.keys(data).forEach(key => {
-                songsDatabase.push({ firebaseKey: key, ...data[key] });
-            });
+        if(data) {
+            Object.keys(data).forEach(key => songsDatabase.push(data[key]));
+            renderList();
         }
-        renderPlaylist();
     });
 
-    window.onYouTubeIframeAPIReady = function() {
+    function renderList() {
+        const list = document.getElementById('playlist');
+        list.innerHTML = songsDatabase.map((s, i) => `
+            <li class="track-item" onclick="playTrack(${i})">
+                <div><strong>${s.title}</strong><br><small>${s.artist}</small></div>
+            </li>
+        `).join('');
+    }
+
+    window.onYouTubeIframeAPIReady = () => {
         playerEngine = new YT.Player('yt-engine', {
             height: '1', width: '1', videoId: '',
-            playerVars: { 'autoplay': 0, 'controls': 0, 'disablekb': 1 },
-            events: {
-                'onStateChange': (e) => {
-                    if (e.data === YT.PlayerState.PLAYING) {
-                        isPlaying = true;
-                        masterBtn.textContent = "PAUSE";
-                    } else if (e.data === YT.PlayerState.PAUSED) {
-                        isPlaying = false;
-                        masterBtn.textContent = "PLAY";
-                    } else if (e.data === YT.PlayerState.ENDED) {
-                        handleTrackEnded();
-                    }
-                }
-            }
+            events: { 'onStateChange': (e) => { if(e.data === 0) playTrack(currentIdx + 1); } }
         });
     };
 
-    function getPlayCount(trackId) {
-        const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
-        return counts[trackId] || 0;
+    function playTrack(idx) {
+        if(idx >= songsDatabase.length) return;
+        currentIdx = idx;
+        playerEngine.loadVideoById(songsDatabase[idx].driveFileId);
+        playerEngine.playVideo();
     }
-
-    function incrementPlayCount(trackId) {
-        const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
-        counts[trackId] = (counts[trackId] || 0) + 1;
-        localStorage.setItem('euberus_play_counts', JSON.stringify(counts));
-        updateGlobalSummary();
-    }
-
-    function updateGlobalSummary() {
-        const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
-        const total = Object.values(counts).reduce((a, b) => a + b, 0);
-        globalCounterUI.textContent = `Total Session Plays: ${total}`;
-    }
-
-    function renderPlaylist() {
-        playlistUI.innerHTML = '';
-        if(songsDatabase.length === 0) {
-            playlistUI.innerHTML = '<li style="padding: 15px; color: var(--text-muted); text-align:center;">Cloud database is empty. Add songs using admin panel!</li>';
-            return;
-        }
-        
-        songsDatabase.forEach((song, index) => {
-            const li = document.createElement('li');
-            li.className = `track-item ${currentTrackIndex === index ? 'active' : ''}`;
-            li.innerHTML = `
-                <div class="track-info">
-                    <div class="track-title">${song.title}</div>
-                    <div class="track-artist">${song.artist}</div>
-                </div>
-                <div><span class="play-count-badge" id="badge-${song.id}">▶ ${getPlayCount(song.id)} plays</span></div>
-            `;
-            li.addEventListener('click', () => loadAndPlayTrack(index));
-            playlistUI.appendChild(li);
-        });
-        updateNavigationButtons();
-    }
-
-    function loadAndPlayTrack(index) {
-        if (index < 0 || index >= songsDatabase.length) return;
-        
-        currentTrackIndex = index;
-        const song = songsDatabase[index];
-        
-        currentTitleUI.textContent = song.title;
-        currentArtistUI.textContent = song.artist;
-        
-        if (playerEngine && playerEngine.loadVideoById) {
-            playerEngine.loadVideoById(song.driveFileId);
-            playerEngine.playVideo();
-        }
-
-        incrementPlayCount(song.id);
-        const badge = document.getElementById(`badge-${song.id}`);
-        if(badge) badge.textContent = `▶ ${getPlayCount(song.id)} plays`;
-
-        const items = playlistUI.querySelectorAll('.track-item');
-        items.forEach((item, idx) => {
-            item.classList.toggle('active', idx === index);
-        });
-
-        updateNavigationButtons();
-    }
-
-    function updateNavigationButtons() {
-        if (currentTrackIndex === -1) {
-            prevBtn.style.visibility = "hidden";
-            nextBtn.style.visibility = "hidden";
-            return;
-        }
-        prevBtn.style.visibility = (currentTrackIndex === 0) ? "hidden" : "visible";
-        nextBtn.style.visibility = (currentTrackIndex === songsDatabase.length - 1) ? "hidden" : "visible";
-    }
-
-    function playPrevious() { if (currentTrackIndex > 0) loadAndPlayTrack(currentTrackIndex - 1); }
-    function playNext() { if (currentTrackIndex < songsDatabase.length - 1) loadAndPlayTrack(currentTrackIndex + 1); }
 
     function togglePlayback() {
-        if (!playerEngine) return;
-        if (currentTrackIndex === -1 && songsDatabase.length > 0) { loadAndPlayTrack(0); return; }
-        if (isPlaying) playerEngine.pauseVideo(); else playerEngine.playVideo();
+        if(playerEngine.getPlayerState() === 2) playerEngine.playVideo();
+        else playerEngine.pauseVideo();
     }
-
-    function toggleRepeat() {
-        isRepeatMode = !isRepeatMode;
-        if (isRepeatMode) { repeatBtn.classList.add('active'); repeatBtn.textContent = "🔁 Repeat: ON"; }
-        else { repeatBtn.classList.remove('active'); repeatBtn.textContent = "🔁 Repeat: OFF"; }
-    }
-
-    function handleTrackEnded() {
-        if (isRepeatMode) { if (playerEngine && playerEngine.playVideo) playerEngine.playVideo(); }
-        else { if (currentTrackIndex < songsDatabase.length - 1) playNext(); }
-    }
-
-    updateGlobalSummary();
 </script>
 </body>
 </html>
