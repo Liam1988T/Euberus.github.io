@@ -3,29 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euberus Stream - Music Player</title>
+    <title>Euberus Cloud Player</title>
     <style>
         :root { --bg-color: #0f172a; --panel-color: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8; --track-hover: #334155; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
-        .dashboard { width: 100%; max-width: 900px; background-color: var(--panel-color); border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); }
-        .header { padding-bottom: 20px; border-bottom: 1px solid var(--track-hover); margin-bottom: 20px; }
+        body { background-color: #0c1220; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .dashboard { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
+        .header { padding: 20px; background: #0284c7; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .content { display: grid; grid-template-columns: 1fr 1fr; padding: 20px; gap: 20px; }
         .track-list { list-style: none; }
-        .track-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 8px; background-color: rgba(255, 255, 255, 0.02); }
-        .track-item:hover { background-color: var(--track-hover); }
-        .track-info { display: flex; flex-direction: column; }
-        .track-title { font-weight: 500; font-size: 16px; }
-        .track-artist { font-size: 13px; color: var(--text-muted); }
+        .track-item { background: rgba(0,0,0,0.2); padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .player-panel { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        button { cursor: pointer; border: none; background: var(--accent-color); color: #0f172a; padding: 10px 30px; border-radius: 20px; font-weight: bold; margin-top: 15px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
 <div class="dashboard">
-    <div class="header"><h1>Euberus Cloud Player</h1></div>
-    <ul class="track-list" id="playlist"></ul>
+    <div class="header">
+        <h1>Euberus Cloud Player</h1>
+        <div style="font-size: 12px; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 20px;">Total Session Plays: 0</div>
+    </div>
+    <div class="content">
+        <div>
+            <div style="color:var(--text-muted); font-size: 12px; margin-bottom: 10px;">AVAILABLE TRACKS</div>
+            <ul class="track-list" id="playlist"></ul>
+        </div>
+        <div class="player-panel">
+            <div style="font-size: 40px; margin-bottom: 10px;">🎵</div>
+            <div id="current-title" style="font-weight:bold;">Select a track</div>
+            <button onclick="togglePlayback()">PLAY</button>
+            <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted);">Repeat: OFF</div>
+        </div>
+    </div>
 </div>
+
+<div id="yt-engine"></div>
 
 <script>
     const firebaseConfig = {
@@ -39,25 +56,24 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    
-    // Fetch and display songs
-    firebase.database().ref('songs').once('value', (snapshot) => {
+    const songsRef = firebase.database().ref('songs');
+
+    // Force data load immediately upon startup
+    songsRef.once('value', (snapshot) => {
         const data = snapshot.val();
         const list = document.getElementById('playlist');
         if(data) {
             Object.values(data).forEach(song => {
                 const li = document.createElement('li');
                 li.className = 'track-item';
-                li.innerHTML = `
-                    <div class="track-info">
-                        <div class="track-title">${song.title}</div>
-                        <div class="track-artist">${song.artist}</div>
-                    </div>
-                `;
+                li.innerHTML = `<div><strong>${song.title}</strong><br><small>${song.artist}</small></div>`;
+                li.onclick = () => document.getElementById('current-title').textContent = song.title;
                 list.appendChild(li);
             });
         }
     });
+
+    function togglePlayback() { alert("Playback engine connected."); }
 </script>
 </body>
 </html>
