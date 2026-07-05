@@ -3,17 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euberus Cloud Stream</title>
+    <title>Euberus Cloud</title>
     <style>
-        :root { --bg-color: #0f172a; --panel-color: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
-        .dashboard { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .track-item { padding: 15px; border-bottom: 1px solid #334155; cursor: pointer; display: flex; justify-content: space-between; }
-        .track-item:hover { background: #334155; }
-        .active { border-left: 4px solid var(--accent-color); background: rgba(56, 189, 248, 0.1); }
-        button { cursor: pointer; padding: 10px 20px; border-radius: 20px; border: none; background: var(--accent-color); font-weight: bold; }
-        #yt-engine { position: absolute; left: -9999px; }
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .track-item { width: 100%; max-width: 500px; padding: 15px; margin: 10px 0; background: #1e293b; border-radius: 8px; cursor: pointer; }
+        #start-btn { padding: 20px 40px; font-size: 20px; background: #38bdf8; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 20px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -21,69 +15,51 @@
 </head>
 <body>
 
-<div class="dashboard">
-    <h2 style="margin-bottom: 20px; color: var(--accent-color);">Live Cloud Library</h2>
-    <ul id="playlist"></ul>
-    <div style="margin-top:20px; text-align:center;">
-        <button id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
-    </div>
-</div>
+    <button id="start-btn" onclick="initPlayer()">TAP TO START PLAYER</button>
+    <ul id="playlist" style="width:100%; max-width:500px; list-style:none;"></ul>
+    <div id="yt-player"></div>
 
-<div id="yt-engine"></div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYnsN9UWtkBxLYTgbe21tpIczGhrni7T8",
+            authDomain: "euberus-ed3b4.firebaseapp.com",
+            databaseURL: "https://euberus-ed3b4-default-rtdb.firebaseio.com",
+            projectId: "euberus-ed3b4",
+            storageBucket: "euberus-ed3b4.firebasestorage.app",
+            messagingSenderId: "206163602431",
+            appId: "1:206163602431:web:70247c1e16d7faae8d95ca"
+        };
+        firebase.initializeApp(firebaseConfig);
+        
+        let player;
+        let songs = [];
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAYnsN9UWtkBxLYTgbe21tpIczGhrni7T8",
-        authDomain: "euberus-ed3b4.firebaseapp.com",
-        databaseURL: "https://euberus-ed3b4-default-rtdb.firebaseio.com",
-        projectId: "euberus-ed3b4",
-        storageBucket: "euberus-ed3b4.firebasestorage.app",
-        messagingSenderId: "206163602431",
-        appId: "1:206163602431:web:70247c1e16d7faae8d95ca"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const songsRef = firebase.database().ref('songs');
-    let songsDatabase = [];
-    let playerEngine = null;
-    let currentIdx = 0;
-
-    // Force data fetch
-    songsRef.once('value').then(snapshot => {
-        const data = snapshot.val();
-        if(data) {
-            Object.keys(data).forEach(key => songsDatabase.push(data[key]));
-            renderList();
-        }
-    });
-
-    function renderList() {
-        const list = document.getElementById('playlist');
-        list.innerHTML = songsDatabase.map((s, i) => `
-            <li class="track-item" onclick="playTrack(${i})">
-                <div><strong>${s.title}</strong><br><small>${s.artist}</small></div>
-            </li>
-        `).join('');
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
-        playerEngine = new YT.Player('yt-engine', {
-            height: '1', width: '1', videoId: '',
-            events: { 'onStateChange': (e) => { if(e.data === 0) playTrack(currentIdx + 1); } }
+        // Fetch data immediately
+        firebase.database().ref('songs').once('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                songs = Object.values(data);
+                const list = document.getElementById('playlist');
+                list.innerHTML = songs.map((s, i) => `
+                    <li class="track-item" onclick="playSong('${s.driveFileId}')">
+                        <strong>${s.title}</strong><br><small>${s.artist}</small>
+                    </li>
+                `).join('');
+            }
         });
-    };
 
-    function playTrack(idx) {
-        if(idx >= songsDatabase.length) return;
-        currentIdx = idx;
-        playerEngine.loadVideoById(songsDatabase[idx].driveFileId);
-        playerEngine.playVideo();
-    }
+        function initPlayer() {
+            document.getElementById('start-btn').style.display = 'none';
+            player = new YT.Player('yt-player', { height: '200', width: '100%', videoId: 'e8zl1u2plOQ' });
+        }
 
-    function togglePlayback() {
-        if(playerEngine.getPlayerState() === 2) playerEngine.playVideo();
-        else playerEngine.pauseVideo();
-    }
-</script>
+        function playSong(id) {
+            if(player) {
+                player.loadVideoById(id);
+            } else {
+                alert("Please tap the 'TAP TO START PLAYER' button first!");
+            }
+        }
+    </script>
 </body>
 </html>
