@@ -80,6 +80,17 @@
     <h2>📦 Current Track Inventory</h2>
     <ul class="track-list" id="admin-playlist"></ul>
 </div>
+    
+    <div style="margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.03); border: 1px dashed #334155; border-radius: 8px;">
+    <h3 style="font-size: 14px; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">🔗 Cross-Domain Sync Tools</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <textarea id="sync-string" rows="2" style="background: #0f172a; border: 1px solid #334155; color: #f8fafc; padding: 10px; border-radius: 6px; font-size: 13px; width: 100%; resize: vertical;" placeholder="Paste sync package string here to import, or click Export..."></textarea>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" onclick="exportData()" style="cursor: pointer; background: #334155; color: #f8fafc; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; font-size: 13px;">📤 Export Package</button>
+            <button type="button" onclick="importData()" style="cursor: pointer; background: #10b981; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; font-size: 13px;">📥 Import Package</button>
+        </div>
+    </div>
+</div>
 
 <script>
     const defaultMockData = [
