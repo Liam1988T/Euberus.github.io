@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euberus Stream - Admin Panel</title>
+    <title>Euberus Stream - Music Player</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -11,226 +11,251 @@
             --accent-color: #38bdf8;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: #334155;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
-            --modify-color: #f59e0b;
+            --track-hover: #334155;
+            --active-toggle: #10b981;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 40px 20px; display: flex; justify-content: center; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .dashboard { width: 100%; max-width: 900px; background-color: var(--panel-color); border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow: hidden; display: flex; flex-direction: column; }
+        .header { padding: 30px; background: linear-gradient(to right, #0284c7, #0369a1); display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .stats-summary { font-size: 14px; background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; }
+        .content-area { display: grid; grid-template-columns: 1fr; padding: 20px; gap: 20px; }
+        @media (min-width: 768px) { .content-area { grid-template-columns: 1.5fr 1fr; } }
+        .playlist-container { display: flex; flex-direction: column; gap: 10px; }
+        .section-title { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+        .track-list { list-style: none; max-height: 400px; overflow-y: auto; }
+        .track-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 8px; background-color: rgba(255, 255, 255, 0.02); }
+        .track-item:hover { background-color: var(--track-hover); }
+        .track-item.active { background-color: rgba(56, 189, 248, 0.15); border-left: 4px solid var(--accent-color); }
+        .track-info { display: flex; flex-direction: column; gap: 4px; }
+        .track-title { font-weight: 500; font-size: 15px; }
+        .track-artist { font-size: 13px; color: var(--text-muted); }
+        .play-count-badge { background-color: #1e293b; border: 1px solid #475569; color: var(--accent-color); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .now-playing-panel { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .album-art-placeholder { width: 140px; height: 140px; background: linear-gradient(135deg, #334155, #1e293b); border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; }
+        .album-art-placeholder::after { content: "🎵"; font-size: 45px; }
+        .current-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+        .current-artist { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
         
-        /* Two Column Layout Wrapper */
-        .admin-layout { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; max-width: 1100px; }
-        @media (min-width: 850px) { .admin-layout { grid-template-columns: 1.6fr 1fr; } }
-
-        .admin-container { background-color: var(--panel-color); border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 20px; }
-        .sidebar-container { background-color: var(--panel-color); border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px dashed var(--border-color); align-self: start; }
+        .controls-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .button-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 50px; }
         
-        h1 { font-size: 22px; color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 5px; }
-        h2 { font-size: 15px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; }
+        button { cursor: pointer; border: none; font-weight: 600; transition: all 0.2s; }
+        .play-btn { background: var(--accent-color); color: #0f172a; padding: 12px 24px; border-radius: 50px; font-size: 14px; width: 110px; }
+        .play-btn:hover { background: #7dd3fc; }
         
-        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-        input, textarea { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 6px; font-size: 14px; width: 100%; }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
+        .nav-btn { background: #334155; color: var(--text-main); padding: 10px 16px; border-radius: 8px; font-size: 12px; visibility: hidden; }
+        .nav-btn:hover { background: #475569; }
         
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
-        button { cursor: pointer; padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .repeat-btn { background: #1e293b; border: 1px solid #475569; color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 12px; }
+        .repeat-btn.active { background: rgba(16, 185, 129, 0.15); border-color: var(--active-toggle); color: var(--active-toggle); }
         
-        .btn-primary { background-color: var(--accent-color); color: #0f172a; }
-        .btn-primary:hover { background-color: #7dd3fc; }
-        .btn-secondary { background-color: #334155; color: var(--text-main); }
-        .btn-secondary:hover { background-color: #475569; }
-        .btn-action { padding: 6px 12px; font-size: 13px; color: white; border-radius: 4px; }
-        
-        .track-list { list-style: none; margin-top: 5px; display: flex; flex-direction: column; gap: 10px; }
-        .track-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.02); }
-        .track-meta { color: var(--accent-color); font-size: 13px; font-family: monospace; margin-top: 4px; }
-        .actions-wrapper { display: flex; gap: 8px; }
+        #yt-engine { width: 1px; height: 1px; position: absolute; left: -9999px; opacity: 0; }
     </style>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
-<div class="admin-layout">
-    
-    <div class="admin-container">
-        <h1 id="panel-title">Euberus Control Dashboard</h1>
-        
-        <form id="track-form" onsubmit="handleFormSubmit(event)">
-            <input type="hidden" id="edit-index" value="-1">
-            <div class="form-group">
-                <label>Song Title</label>
-                <input type="text" id="title" required placeholder="e.g., Because You're My Woman">
-            </div>
-            <div class="form-group">
-                <label>Artist Name</label>
-                <input type="text" id="artist" required placeholder="e.g., Lee Seung Gi">
-            </div>
-            <div class="form-group">
-                <label>YouTube Video ID</label>
-                <input type="text" id="driveFileId" required placeholder="e.g., e8zl1u2plOQ">
-            </div>
-            <button type="submit" class="btn-primary" id="submit-btn">➕ Add Track to Sandbox</button>
-            <button type="button" class="btn-secondary" id="cancel-btn" style="display:none;" onclick="resetFormState()">Cancel Edit</button>
-        </form>
-
-        <h2>📦 Current Track Inventory</h2>
-        <ul class="track-list" id="admin-playlist"></ul>
+<div class="dashboard">
+    <div class="header">
+        <div>
+            <h1>Euberus Cloud Player</h1>
+            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v1.1.1-stable</span>
+        </div>
+        <div class="stats-summary" id="global-counter">Total Session Plays: 0</div>
     </div>
 
-    <div class="sidebar-container">
-        <h1 style="font-size: 16px;">🔗 Cross-Domain Sync Tools</h1>
-        <p style="font-size: 12px; color: var(--text-muted); margin: 10px 0 15px 0; line-height: 1.5;">
-            Export data from your source domain dashboard, then paste and import it on your destination domain dashboard to sync histories instantly.
-        </p>
-        <div class="form-group">
-            <textarea id="sync-string" rows="5" placeholder="Paste package string token sequence here to overwrite or migrate libraries..."></textarea>
+    <div class="content-area">
+        <div class="playlist-container">
+            <div class="section-title">Available Tracks</div>
+            <ul class="track-list" id="playlist"></ul>
         </div>
-        <div class="btn-row" style="flex-direction: column;">
-            <button type="button" class="btn-secondary" style="width: 100%; justify-content: center;" onclick="exportData()">📤 Export Sync Package</button>
-            <button type="button" class="btn-primary" style="width: 100%; justify-content: center; background-color: var(--success-color); color: white;" onclick="importData()">📥 Import Sync Package</button>
+
+        <div class="now-playing-panel">
+            <div class="album-art-placeholder"></div>
+            <div class="current-title" id="current-title">Select a track</div>
+            <div class="current-artist" id="current-artist">Choose a song to start listening</div>
+            
+            <div class="controls-wrapper">
+                <div class="button-row">
+                    <button class="nav-btn" id="prev-btn" onclick="playPrevious()">⏮ PREV</button>
+                    <button class="play-btn" id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
+                    <button class="nav-btn" id="next-btn" onclick="playNext()">NEXT ⏭</button>
+                </div>
+                <button class="repeat-btn" id="repeat-toggle" onclick="toggleRepeat()">🔁 Repeat: OFF</button>
+            </div>
         </div>
     </div>
-
 </div>
 
+<div id="yt-engine"></div>
+
 <script>
-    const defaultMockData = [
+    // 🏠 MASTER SONG DATABASE (Add lines here directly to expand your music tracklist!)
+    const songsDatabase = [
         { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" }
+        // To add another song, simply put a comma above and uncomment/fill out this line:
+        // ,{ id: "track_2", title: "Song Name Here", artist: "Artist Here", driveFileId: "YouTube_ID_Here" }
     ];
 
-    function getLibrary() {
-        const data = localStorage.getItem('euberus_song_library');
-        if (!data) {
-            localStorage.setItem('euberus_song_library', JSON.stringify(defaultMockData));
-            return defaultMockData;
-        }
-        return JSON.parse(data);
-    }
+    const playlistUI = document.getElementById('playlist');
+    const currentTitleUI = document.getElementById('current-title');
+    const currentArtistUI = document.getElementById('current-artist');
+    const globalCounterUI = document.getElementById('global-counter');
+    const masterBtn = document.getElementById('master-play-trigger');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const repeatBtn = document.getElementById('repeat-toggle');
 
-    function renderAdminList() {
-        const songs = getLibrary();
-        const container = document.getElementById('admin-playlist');
-        container.innerHTML = '';
-        
-        if(songs.length === 0) {
-            container.innerHTML = `<li style="color: var(--text-muted); font-size: 14px; font-style: italic; padding: 10px;">No tracks loaded in local sandbox.</li>`;
-            return;
-        }
+    let currentTrackIndex = -1;
+    let playerEngine = null;
+    let isPlaying = false;
+    let isRepeatMode = false;
 
-        songs.forEach((song, index) => {
-            const li = document.createElement('li');
-            li.className = 'track-item';
-            li.innerHTML = `
-                <div>
-                    <strong style="font-size: 15px;">${song.title}</strong> 
-                    <span style="color: var(--text-muted); font-size: 14px;">- ${song.artist}</span>
-                    <div class="track-meta">${song.driveFileId}</div>
-                </div>
-                <div class="actions-wrapper">
-                    <button class="btn-action" style="background-color: var(--modify-color);" onclick="startModify(${index})">Modify</button>
-                    <button class="btn-action" style="background-color: var(--danger-color);" onclick="deleteSong(${index})">Delete</button>
-                </div>
-            `;
-            container.appendChild(li);
-        });
-    }
-
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        const songs = getLibrary();
-        const editIndex = parseInt(document.getElementById('edit-index').value);
-        
-        const titleVal = document.getElementById('title').value;
-        const artistVal = document.getElementById('artist').value;
-        const idVal = document.getElementById('driveFileId').value;
-
-        if (editIndex > -1) {
-            // Modify existing item configuration parameters
-            songs[editIndex].title = titleVal;
-            songs[editIndex].artist = artistVal;
-            songs[editIndex].driveFileId = idVal;
-        } else {
-            // Construct new insertion entry block
-            const newSong = {
-                id: "track_" + Date.now(),
-                title: titleVal,
-                artist: artistVal,
-                driveFileId: idVal
-            };
-            songs.push(newSong);
-        }
-        
-        localStorage.setItem('euberus_song_library', JSON.stringify(songs));
-        resetFormState();
-        renderAdminList();
-    }
-
-    function startModify(index) {
-        const songs = getLibrary();
-        const song = songs[index];
-        
-        document.getElementById('edit-index').value = index;
-        document.getElementById('title').value = song.title;
-        document.getElementById('artist').value = song.artist;
-        document.getElementById('driveFileId').value = song.driveFileId;
-        
-        document.getElementById('submit-btn').textContent = "💾 Save Modifications";
-        document.getElementById('cancel-btn').style.display = "inline-flex";
-        document.getElementById('title').focus();
-    }
-
-    function resetFormState() {
-        document.getElementById('track-form').reset();
-        document.getElementById('edit-index').value = "-1";
-        document.getElementById('submit-btn').textContent = "➕ Add Track to Sandbox";
-        document.getElementById('cancel-btn').style.display = "none";
-    }
-
-    function deleteSong(index) {
-        if(!confirm("Are you sure you want to remove this track entry?")) return;
-        const songs = getLibrary();
-        songs.splice(index, 1);
-        localStorage.setItem('euberus_song_library', JSON.stringify(songs));
-        resetFormState();
-        renderAdminList();
-    }
-
-    function exportData() {
-        const songs = getLibrary();
-        if (songs.length === 0) {
-            alert("No tracks to package!");
-            return;
-        }
-        const cleanString = btoa(unescape(encodeURIComponent(JSON.stringify(songs))));
-        const box = document.getElementById('sync-string');
-        box.value = cleanString;
-        box.select();
-        document.execCommand('copy');
-        alert("Package encoded and copied to clipboard successfully!");
-    }
-
-    function importData() {
-        const inputString = document.getElementById('sync-string').value.trim();
-        if (!inputString) {
-            alert("Please input a data token string packet first.");
-            return;
-        }
-        try {
-            const parsed = JSON.parse(decodeURIComponent(escape(atob(inputString))));
-            if (Array.isArray(parsed)) {
-                localStorage.setItem('euberus_song_library', JSON.stringify(parsed));
-                alert("Data state successfully synced!");
-                resetFormState();
-                renderAdminList();
-                document.getElementById('sync-string').value = '';
+    window.onYouTubeIframeAPIReady = function() {
+        playerEngine = new YT.Player('yt-engine', {
+            height: '1',
+            width: '1',
+            videoId: '',
+            playerVars: { 'autoplay': 0, 'controls': 0, 'disablekb': 1 },
+            events: {
+                'onStateChange': (e) => {
+                    if (e.data === YT.PlayerState.PLAYING) {
+                        isPlaying = true;
+                        masterBtn.textContent = "PAUSE";
+                    } else if (e.data === YT.PlayerState.PAUSED) {
+                        isPlaying = false;
+                        masterBtn.textContent = "PLAY";
+                    } else if (e.data === YT.PlayerState.ENDED) {
+                        handleTrackEnded();
+                    }
+                }
             }
-        } catch (err) {
-            alert("Malformed package code payload. Decryption aborted.");
+        });
+    };
+
+    function getPlayCount(trackId) {
+        const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
+        return counts[trackId] || 0;
+    }
+
+    function incrementPlayCount(trackId) {
+        const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
+        counts[trackId] = (counts[trackId] || 0) + 1;
+        localStorage.setItem('euberus_play_counts', JSON.stringify(counts));
+        updateGlobalSummary();
+    }
+
+    function updateGlobalSummary() {
+        const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        globalCounterUI.textContent = `Total Session Plays: ${total}`;
+    }
+
+    function renderPlaylist() {
+        playlistUI.innerHTML = '';
+        
+        songsDatabase.forEach((song, index) => {
+            const li = document.createElement('li');
+            li.className = `track-item ${currentTrackIndex === index ? 'active' : ''}`;
+            li.innerHTML = `
+                <div class="track-info">
+                    <div class="track-title">${song.title}</div>
+                    <div class="track-artist">${song.artist}</div>
+                </div>
+                <div><span class="play-count-badge" id="badge-${song.id}">▶ ${getPlayCount(song.id)} plays</span></div>
+            `;
+            li.addEventListener('click', () => loadAndPlayTrack(index));
+            playlistUI.appendChild(li);
+        });
+        updateNavigationButtons();
+    }
+
+    function loadAndPlayTrack(index) {
+        if (index < 0 || index >= songsDatabase.length) return;
+        
+        currentTrackIndex = index;
+        const song = songsDatabase[index];
+        
+        currentTitleUI.textContent = song.title;
+        currentArtistUI.textContent = song.artist;
+        
+        if (playerEngine && playerEngine.loadVideoById) {
+            playerEngine.loadVideoById(song.driveFileId);
+            playerEngine.playVideo();
+        }
+
+        incrementPlayCount(song.id);
+        const badge = document.getElementById(`badge-${song.id}`);
+        if(badge) badge.textContent = `▶ ${getPlayCount(song.id)} plays`;
+
+        const items = playlistUI.querySelectorAll('.track-item');
+        items.forEach((item, idx) => {
+            item.classList.toggle('active', idx === index);
+        });
+
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        if (currentTrackIndex === -1) {
+            prevBtn.style.visibility = "hidden";
+            nextBtn.style.visibility = "hidden";
+            return;
+        }
+        prevBtn.style.visibility = (currentTrackIndex === 0) ? "hidden" : "visible";
+        nextBtn.style.visibility = (currentTrackIndex === songsDatabase.length - 1) ? "hidden" : "visible";
+    }
+
+    function playPrevious() {
+        if (currentTrackIndex > 0) {
+            loadAndPlayTrack(currentTrackIndex - 1);
         }
     }
 
-    renderAdminList();
+    function playNext() {
+        if (currentTrackIndex < songsDatabase.length - 1) {
+            loadAndPlayTrack(currentTrackIndex + 1);
+        }
+    }
+
+    function togglePlayback() {
+        if (!playerEngine) return;
+        if (currentTrackIndex === -1 && songsDatabase.length > 0) {
+            loadAndPlayTrack(0);
+            return;
+        }
+        if (isPlaying) {
+            playerEngine.pauseVideo();
+        } else {
+            playerEngine.playVideo();
+        }
+    }
+
+    function toggleRepeat() {
+        isRepeatMode = !isRepeatMode;
+        if (isRepeatMode) {
+            repeatBtn.classList.add('active');
+            repeatBtn.textContent = "🔁 Repeat: ON";
+        } else {
+            repeatBtn.classList.remove('active');
+            repeatBtn.textContent = "🔁 Repeat: OFF";
+        }
+    }
+
+    function handleTrackEnded() {
+        if (isRepeatMode) {
+            if (playerEngine && playerEngine.playVideo) playerEngine.playVideo();
+        } else {
+            if (currentTrackIndex < songsDatabase.length - 1) {
+                playNext();
+            }
+        }
+    }
+
+    updateGlobalSummary();
+    renderPlaylist();
 </script>
 </body>
 </html>
