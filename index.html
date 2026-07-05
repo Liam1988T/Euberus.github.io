@@ -12,6 +12,7 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --track-hover: #334155;
+            --active-toggle: #10b981;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -32,17 +33,25 @@
         .track-artist { font-size: 13px; color: var(--text-muted); }
         .play-count-badge { background-color: #1e293b; border: 1px solid #475569; color: var(--accent-color); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
         .now-playing-panel { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); }
-        .album-art-placeholder { width: 150px; height: 150px; background: linear-gradient(135deg, #334155, #1e293b); border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; }
-        .album-art-placeholder::after { content: "🎵"; font-size: 50px; }
+        .album-art-placeholder { width: 140px; height: 140px; background: linear-gradient(135deg, #334155, #1e293b); border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; }
+        .album-art-placeholder::after { content: "🎵"; font-size: 45px; }
         .current-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
         .current-artist { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
         
-        /* Native-feeling playback buttons */
-        .controls-wrapper { width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
-        .play-btn { background: var(--accent-color); color: #0f172a; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 14px; width: 120px; }
+        /* Control Navigation Rack */
+        .controls-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .button-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 50px; }
+        
+        button { cursor: pointer; border: none; font-weight: 600; transition: all 0.2s; }
+        .play-btn { background: var(--accent-color); color: #0f172a; padding: 12px 24px; border-radius: 50px; font-size: 14px; width: 110px; }
         .play-btn:hover { background: #7dd3fc; }
         
-        /* Hidden background frame handler */
+        .nav-btn { background: #334155; color: var(--text-main); padding: 10px 16px; border-radius: 8px; font-size: 12px; visibility: hidden; }
+        .nav-btn:hover { background: #475569; }
+        
+        .repeat-btn { background: #1e293b; border: 1px solid #475569; color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 12px; }
+        .repeat-btn.active { background: rgba(16, 185, 129, 0.15); border-color: var(--active-toggle); color: var(--active-toggle); }
+        
         #yt-engine { width: 1px; height: 1px; position: absolute; left: -9999px; opacity: 0; }
     </style>
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -67,7 +76,12 @@
             <div class="current-artist" id="current-artist">Choose a song to start listening</div>
             
             <div class="controls-wrapper">
-                <button class="play-btn" id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
+                <div class="button-row">
+                    <button class="nav-btn" id="prev-btn" onclick="playPrevious()">⏮ PREV</button>
+                    <button class="play-btn" id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
+                    <button class="nav-btn" id="next-btn" onclick="playNext()">NEXT ⏭</button>
+                </div>
+                <button class="repeat-btn" id="repeat-toggle" onclick="toggleRepeat()">🔁 Repeat: OFF</button>
             </div>
         </div>
     </div>
@@ -77,7 +91,7 @@
 
 <script>
     const defaultMockData = [
-        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "t_v487f7Psc" }
+        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" }
     ];
 
     function loadCentralLibrary() {
@@ -89,18 +103,21 @@
         return JSON.parse(data);
     }
 
-    const songsDatabase = loadCentralLibrary();
+    let songsDatabase = loadCentralLibrary();
     const playlistUI = document.getElementById('playlist');
     const currentTitleUI = document.getElementById('current-title');
     const currentArtistUI = document.getElementById('current-artist');
     const globalCounterUI = document.getElementById('global-counter');
     const masterBtn = document.getElementById('master-play-trigger');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const repeatBtn = document.getElementById('repeat-toggle');
 
-    let currentTrackId = null;
+    let currentTrackIndex = -1;
     let playerEngine = null;
     let isPlaying = false;
+    let isRepeatMode = false;
 
-    // Initialize the background YouTube audio sync
     window.onYouTubeIframeAPIReady = function() {
         playerEngine = new YT.Player('yt-engine', {
             height: '1',
@@ -112,9 +129,11 @@
                     if (e.data === YT.PlayerState.PLAYING) {
                         isPlaying = true;
                         masterBtn.textContent = "PAUSE";
-                    } else {
+                    } else if (e.data === YT.PlayerState.PAUSED) {
                         isPlaying = false;
                         masterBtn.textContent = "PLAY";
+                    } else if (e.data === YT.PlayerState.ENDED) {
+                        handleTrackEnded();
                     }
                 }
             }
@@ -141,10 +160,11 @@
 
     function renderPlaylist() {
         playlistUI.innerHTML = '';
-        songsDatabase.forEach(song => {
+        songsDatabase = loadCentralLibrary();
+        
+        songsDatabase.forEach((song, index) => {
             const li = document.createElement('li');
-            li.className = `track-item ${currentTrackId === song.id ? 'active' : ''}`;
-            li.dataset.id = song.id;
+            li.className = `track-item ${currentTrackIndex === index ? 'active' : ''}`;
             li.innerHTML = `
                 <div class="track-info">
                     <div class="track-title">${song.title}</div>
@@ -152,13 +172,18 @@
                 </div>
                 <div><span class="play-count-badge" id="badge-${song.id}">▶ ${getPlayCount(song.id)} plays</span></div>
             `;
-            li.addEventListener('click', () => loadAndPlayTrack(song));
+            li.addEventListener('click', () => loadAndPlayTrack(index));
             playlistUI.appendChild(li);
         });
+        updateNavigationButtons();
     }
 
-    function loadAndPlayTrack(song) {
-        currentTrackId = song.id;
+    function loadAndPlayTrack(index) {
+        if (index < 0 || index >= songsDatabase.length) return;
+        
+        currentTrackIndex = index;
+        const song = songsDatabase[index];
+        
         currentTitleUI.textContent = song.title;
         currentArtistUI.textContent = song.artist;
         
@@ -171,17 +196,75 @@
         const badge = document.getElementById(`badge-${song.id}`);
         if(badge) badge.textContent = `▶ ${getPlayCount(song.id)} plays`;
 
-        document.querySelectorAll('.track-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.id === song.id);
+        // Highlight active layout row
+        const items = playlistUI.querySelectorAll('.track-item');
+        items.forEach((item, idx) => {
+            item.classList.toggle('active', idx === index);
         });
+
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        // If no song is loaded yet, keep them hidden
+        if (currentTrackIndex === -1) {
+            prevBtn.style.visibility = "hidden";
+            nextBtn.style.visibility = "hidden";
+            return;
+        }
+
+        // Hide PREV button if it's the very first song
+        prevBtn.style.visibility = (currentTrackIndex === 0) ? "hidden" : "visible";
+
+        // Hide NEXT button if it's the absolute last song
+        nextBtn.style.visibility = (currentTrackIndex === songsDatabase.length - 1) ? "hidden" : "visible";
+    }
+
+    function playPrevious() {
+        if (currentTrackIndex > 0) {
+            loadAndPlayTrack(currentTrackIndex - 1);
+        }
+    }
+
+    function playNext() {
+        if (currentTrackIndex < songsDatabase.length - 1) {
+            loadAndPlayTrack(currentTrackIndex + 1);
+        }
     }
 
     function togglePlayback() {
-        if (!playerEngine || !currentTrackId) return;
+        if (!playerEngine) return;
+        if (currentTrackIndex === -1 && songsDatabase.length > 0) {
+            loadAndPlayTrack(0);
+            return;
+        }
         if (isPlaying) {
             playerEngine.pauseVideo();
         } else {
             playerEngine.playVideo();
+        }
+    }
+
+    function toggleRepeat() {
+        isRepeatMode = !isRepeatMode;
+        if (isRepeatMode) {
+            repeatBtn.classList.add('active');
+            repeatBtn.textContent = "🔁 Repeat: ON";
+        } else {
+            repeatBtn.classList.remove('active');
+            repeatBtn.textContent = "🔁 Repeat: OFF";
+        }
+    }
+
+    function handleTrackEnded() {
+        if (isRepeatMode) {
+            // Loop the current track
+            if (playerEngine && playerEngine.playVideo) playerEngine.playVideo();
+        } else {
+            // Otherwise, jump to next track if available
+            if (currentTrackIndex < songsDatabase.length - 1) {
+                playNext();
+            }
         }
     }
 
