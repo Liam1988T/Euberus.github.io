@@ -38,7 +38,6 @@
         .current-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
         .current-artist { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
         
-        /* Control Navigation Rack */
         .controls-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .button-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 50px; }
         
@@ -62,8 +61,7 @@
     <div class="header">
         <div>
             <h1>Euberus Cloud Player</h1>
-            <!-- System release tag indicator -->
-            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v1.1.0-release</span>
+            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v1.1.1-stable</span>
         </div>
         <div class="stats-summary" id="global-counter">Total Session Plays: 0</div>
     </div>
@@ -94,20 +92,13 @@
 <div id="yt-engine"></div>
 
 <script>
-    const defaultMockData = [
+    // 🏠 MASTER SONG DATABASE (Add lines here directly to expand your music tracklist!)
+    const songsDatabase = [
         { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" }
+        // To add another song, simply put a comma above and uncomment/fill out this line:
+        // ,{ id: "track_2", title: "Song Name Here", artist: "Artist Here", driveFileId: "YouTube_ID_Here" }
     ];
 
-    function loadCentralLibrary() {
-        const data = localStorage.getItem('euberus_song_library');
-        if (!data) {
-            localStorage.setItem('euberus_song_library', JSON.stringify(defaultMockData));
-            return defaultMockData;
-        }
-        return JSON.parse(data);
-    }
-
-    let songsDatabase = loadCentralLibrary();
     const playlistUI = document.getElementById('playlist');
     const currentTitleUI = document.getElementById('current-title');
     const currentArtistUI = document.getElementById('current-artist');
@@ -164,7 +155,6 @@
 
     function renderPlaylist() {
         playlistUI.innerHTML = '';
-        songsDatabase = loadCentralLibrary();
         
         songsDatabase.forEach((song, index) => {
             const li = document.createElement('li');
@@ -200,7 +190,6 @@
         const badge = document.getElementById(`badge-${song.id}`);
         if(badge) badge.textContent = `▶ ${getPlayCount(song.id)} plays`;
 
-        // Highlight active layout row
         const items = playlistUI.querySelectorAll('.track-item');
         items.forEach((item, idx) => {
             item.classList.toggle('active', idx === index);
@@ -210,17 +199,12 @@
     }
 
     function updateNavigationButtons() {
-        // If no song is loaded yet, keep them hidden
         if (currentTrackIndex === -1) {
             prevBtn.style.visibility = "hidden";
             nextBtn.style.visibility = "hidden";
             return;
         }
-
-        // Hide PREV button if it's the very first song
         prevBtn.style.visibility = (currentTrackIndex === 0) ? "hidden" : "visible";
-
-        // Hide NEXT button if it's the absolute last song
         nextBtn.style.visibility = (currentTrackIndex === songsDatabase.length - 1) ? "hidden" : "visible";
     }
 
@@ -262,10 +246,8 @@
 
     function handleTrackEnded() {
         if (isRepeatMode) {
-            // Loop the current track
             if (playerEngine && playerEngine.playVideo) playerEngine.playVideo();
         } else {
-            // Otherwise, jump to next track if available
             if (currentTrackIndex < songsDatabase.length - 1) {
                 playNext();
             }
