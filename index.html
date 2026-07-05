@@ -265,12 +265,11 @@
 
     let currentTrackId = null;
 
-   // Helper to generate a reliable direct streaming audio source wrapper
+  // Helper to generate a reliable direct streaming audio source wrapper
     function makeStreamUrl(fileId) {
-        // Uses Google's dedicated content delivery CDN to serve raw file streams directly
-        return `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
+        // Uses Google's standard public asset delivery link
+        return `https://docs.google.com/uc?export=open&id=${fileId}`;
     }
-
     // Helper to get play count safely from LocalStorage
     function getPlayCount(trackId) {
         const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
