@@ -16,7 +16,15 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 40px 20px; display: flex; justify-content: center; }
+        
+        /* Hide content until authenticated */
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            padding: 40px 20px; 
+            display: none; /* Controlled by JavaScript password gate */
+            justify-content: center; 
+        }
         
         .admin-container { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
@@ -46,6 +54,24 @@
 </head>
 <body>
 
+<script>
+    // --- PASSWORD GATE SYSTEM ---
+    // Change 'Liam2026' to whatever private password you prefer!
+    const ADMIN_PASSWORD = "Liam2026"; 
+
+    // Prompt user immediately before anything renders
+    const accessAttempt = prompt("Access Restricted. Please enter the Administrator Password:");
+
+    if (accessAttempt === ADMIN_PASSWORD) {
+        // Correct password -> Let the page show
+        document.body.style.display = "flex";
+    } else {
+        // Wrong password -> Boot them out to the main player page
+        alert("Incorrect password. Access Denied.");
+        window.location.href = "index.html";
+    }
+</script>
+
 <div class="admin-container">
     <h1>Song Management Center <span>Admin Panel</span></h1>
 
@@ -60,7 +86,7 @@
                 </div>
                 <div>
                     <label>Artist Name</label>
-                    <input type="text" id="song-artist" placeholder="e.g., Liam Production" required>
+                    <input type="text" id="song-artist" placeholder="e.g., Audio Production" required>
                 </div>
                 <div class="full-width">
                     <label>Google Drive File ID</label>
@@ -87,13 +113,8 @@
 </div>
 
 <script>
-    // Fallback Mock default initialization data matching previous layout structure
-    const defaultData = [
-        { id: "track_1", title: "Lo-Fi Beats Study Session", artist: "Chill Production Crew", driveFileId: "1_xY_YOUR_ACTUAL_GOOGLE_DRIVE_FILE_ID_HERE_1" },
-        { id: "track_2", title: "Summer Synthwave Theme", artist: "Retro Wave Labs", driveFileId: "1_xY_YOUR_ACTUAL_GOOGLE_DRIVE_FILE_ID_HERE_2" }
-    ];
+    const defaultData = [];
 
-    // Read centralized list array data safe-checks
     function getLibrary() {
         const data = localStorage.getItem('euberus_song_library');
         if (!data) {
@@ -108,7 +129,6 @@
         renderTable();
     }
 
-    // UI Render Processing
     const tableBody = document.getElementById('admin-table-body');
     const songForm = document.getElementById('song-form');
     const editIdInput = document.getElementById('edit-track-id');
@@ -149,14 +169,12 @@
         });
     }
 
-    // Processing Actions
     songForm.addEventListener('submit', (e) => {
         e.preventDefault();
         let library = getLibrary();
         const editId = editIdInput.value;
 
         if (editId) {
-            // Update mode context processing
             library = library.map(item => {
                 if(item.id === editId) {
                     return { ...item, title: titleInput.value, artist: artistInput.value, driveFileId: driveIdInput.value };
@@ -165,7 +183,6 @@
             });
             clearFormState();
         } else {
-            // Create target entry dynamic additions
             const newSong = {
                 id: 'track_' + Date.now(),
                 title: titleInput.value,
@@ -194,7 +211,7 @@
     }
 
     window.deleteTrack = function(id) {
-        if(confirm("Are you sure you want to remove this track from your live configuration?")) {
+        if(confirm("Are you sure you want to remove this track?")) {
             let library = getLibrary();
             library = library.filter(s => s.id !== id);
             saveLibrary(library);
@@ -212,7 +229,6 @@
         btnCancel.style.display = "none";
     }
 
-    // Init Execution Loop
     renderTable();
 </script>
 </body>
