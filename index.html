@@ -13,198 +13,39 @@
             --text-muted: #94a3b8;
             --track-hover: #334155;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .dashboard {
-            width: 100%;
-            max-width: 900px;
-            background-color: var(--panel-color);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header Layout */
-        .header {
-            padding: 30px;
-            background: linear-gradient(to right, #0284c7, #0369a1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .stats-summary {
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-
-        /* Main Content Grid */
-        .content-area {
-            display: grid;
-            grid-template-columns: 1fr;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        @media (min-width: 768px) {
-            .content-area {
-                grid-template-columns: 1.5fr 1fr;
-            }
-        }
-
-        /* Playlist Section */
-        .playlist-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-        }
-
-        .track-list {
-            list-style: none;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .track-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            margin-bottom: 8px;
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .track-item:hover {
-            background-color: var(--track-hover);
-        }
-
-        .track-item.active {
-            background-color: rgba(56, 189, 248, 0.15);
-            border-left: 4px solid var(--accent-color);
-        }
-
-        .track-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .track-title {
-            font-weight: 500;
-            font-size: 15px;
-        }
-
-        .track-artist {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .track-stats {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .play-count-badge {
-            background-color: #1e293b;
-            border: 1px solid #475569;
-            color: var(--accent-color);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        /* Now Playing Sidebar Node */
-        .now-playing-panel {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .album-art-placeholder {
-            width: 150px;
-            height: 150px;
-            background: linear-gradient(135deg, #334155, #1e293b);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        }
-
-        .album-art-placeholder::after {
-            content: "🎵";
-            font-size: 50px;
-        }
-
-        .current-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .current-artist {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        /* Audio Native Control Customization wrapper */
-        .audio-player-wrapper {
-            width: 100%;
-            padding: 10px 0;
-        }
-
-        audio {
-            width: 100%;
-            border-radius: 8px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .dashboard { width: 100%; max-width: 900px; background-color: var(--panel-color); border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow: hidden; display: flex; flex-direction: column; }
+        .header { padding: 30px; background: linear-gradient(to right, #0284c7, #0369a1); display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .stats-summary { font-size: 14px; background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; }
+        .content-area { display: grid; grid-template-columns: 1fr; padding: 20px; gap: 20px; }
+        @media (min-width: 768px) { .content-area { grid-template-columns: 1.5fr 1fr; } }
+        .playlist-container { display: flex; flex-direction: column; gap: 10px; }
+        .section-title { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+        .track-list { list-style: none; max-height: 400px; overflow-y: auto; }
+        .track-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 8px; background-color: rgba(255, 255, 255, 0.02); }
+        .track-item:hover { background-color: var(--track-hover); }
+        .track-item.active { background-color: rgba(56, 189, 248, 0.15); border-left: 4px solid var(--accent-color); }
+        .track-info { display: flex; flex-direction: column; gap: 4px; }
+        .track-title { font-weight: 500; font-size: 15px; }
+        .track-artist { font-size: 13px; color: var(--text-muted); }
+        .play-count-badge { background-color: #1e293b; border: 1px solid #475569; color: var(--accent-color); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+        .now-playing-panel { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .album-art-placeholder { width: 150px; height: 150px; background: linear-gradient(135deg, #334155, #1e293b); border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; }
+        .album-art-placeholder::after { content: "🎵"; font-size: 50px; }
+        .current-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+        .current-artist { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+        
+        /* Native-feeling playback buttons */
+        .controls-wrapper { width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+        .play-btn { background: var(--accent-color); color: #0f172a; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 14px; width: 120px; }
+        .play-btn:hover { background: #7dd3fc; }
+        
+        /* Hidden background frame handler */
+        #yt-engine { width: 1px; height: 1px; position: absolute; left: -9999px; opacity: 0; }
     </style>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
@@ -217,8 +58,7 @@
     <div class="content-area">
         <div class="playlist-container">
             <div class="section-title">Available Tracks</div>
-            <ul class="track-list" id="playlist">
-                </ul>
+            <ul class="track-list" id="playlist"></ul>
         </div>
 
         <div class="now-playing-panel">
@@ -226,25 +66,20 @@
             <div class="current-title" id="current-title">Select a track</div>
             <div class="current-artist" id="current-artist">Choose a song to start listening</div>
             
-            <div class="audio-player-wrapper">
-                <audio id="audio-engine" controls></audio>
+            <div class="controls-wrapper">
+                <button class="play-btn" id="master-play-trigger" onclick="togglePlayback()">PLAY</button>
             </div>
         </div>
     </div>
 </div>
 
+<div id="yt-engine"></div>
+
 <script>
-    // --- 1. DYNAMIC SYSTEM LOAD: READING FROM ADMIN PANEL DATA ---
     const defaultMockData = [
-        { 
-            id: "track_1", 
-            title: "Lo-Fi Beats Study Session", 
-            artist: "Chill Production Crew", 
-            driveFileId: "1_xY_YOUR_ACTUAL_GOOGLE_DRIVE_FILE_ID_HERE_1" 
-        }
+        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "t_v487f7Psc" }
     ];
 
-    // This dynamically pulls live updates configured via your Admin dashboard local data pool
     function loadCentralLibrary() {
         const data = localStorage.getItem('euberus_song_library');
         if (!data) {
@@ -255,34 +90,46 @@
     }
 
     const songsDatabase = loadCentralLibrary();
-
-    // --- 2. INITIALIZATION & STATE MANAGEMENT ---
-    const audioEngine = document.getElementById('audio-engine');
     const playlistUI = document.getElementById('playlist');
     const currentTitleUI = document.getElementById('current-title');
     const currentArtistUI = document.getElementById('current-artist');
     const globalCounterUI = document.getElementById('global-counter');
+    const masterBtn = document.getElementById('master-play-trigger');
 
     let currentTrackId = null;
+    let playerEngine = null;
+    let isPlaying = false;
 
-  // Helper to generate a reliable direct streaming audio source wrapper
-    function makeStreamUrl(fileId) {
-        // Uses Google's standard public asset delivery link
-        return `https://docs.google.com/uc?export=open&id=${fileId}`;
-    }
-    // Helper to get play count safely from LocalStorage
+    // Initialize the background YouTube audio sync
+    window.onYouTubeIframeAPIReady = function() {
+        playerEngine = new YT.Player('yt-engine', {
+            height: '1',
+            width: '1',
+            videoId: '',
+            playerVars: { 'autoplay': 0, 'controls': 0, 'disablekb': 1 },
+            events: {
+                'onStateChange': (e) => {
+                    if (e.data === YT.PlayerState.PLAYING) {
+                        isPlaying = true;
+                        masterBtn.textContent = "PAUSE";
+                    } else {
+                        isPlaying = false;
+                        masterBtn.textContent = "PLAY";
+                    }
+                }
+            }
+        });
+    };
+
     function getPlayCount(trackId) {
         const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
         return counts[trackId] || 0;
     }
 
-    // Increment play count inside LocalStorage
     function incrementPlayCount(trackId) {
         const counts = JSON.parse(localStorage.getItem('euberus_play_counts')) || {};
         counts[trackId] = (counts[trackId] || 0) + 1;
         localStorage.setItem('euberus_play_counts', JSON.stringify(counts));
-        
-        // Update global session total summary statistics
         updateGlobalSummary();
     }
 
@@ -292,69 +139,54 @@
         globalCounterUI.textContent = `Total Session Plays: ${total}`;
     }
 
-    // --- 3. RENDERING UI ---
     function renderPlaylist() {
         playlistUI.innerHTML = '';
-        
-        if (songsDatabase.length === 0 || (songsDatabase.length === 1 && songsDatabase[0].driveFileId.includes("YOUR_ACTUAL"))) {
-            playlistUI.innerHTML = `<li class="track-item" style="color:var(--text-muted); cursor:default; justify-content:center;">No custom tracks loaded. Go to /admin.html to add your songs!</li>`;
-            return;
-        }
-
         songsDatabase.forEach(song => {
             const li = document.createElement('li');
             li.className = `track-item ${currentTrackId === song.id ? 'active' : ''}`;
             li.dataset.id = song.id;
-
-            const count = getPlayCount(song.id);
-
             li.innerHTML = `
                 <div class="track-info">
                     <div class="track-title">${song.title}</div>
                     <div class="track-artist">${song.artist}</div>
                 </div>
-                <div class="track-stats">
-                    <span class="play-count-badge" id="badge-${song.id}">▶ ${count} plays</span>
-                </div>
+                <div><span class="play-count-badge" id="badge-${song.id}">▶ ${getPlayCount(song.id)} plays</span></div>
             `;
-
             li.addEventListener('click', () => loadAndPlayTrack(song));
             playlistUI.appendChild(li);
         });
     }
 
-    // --- 4. PLAYER CONTROLS & LOGIC ---
     function loadAndPlayTrack(song) {
         currentTrackId = song.id;
-        
-        // Update Now Playing textual displays
         currentTitleUI.textContent = song.title;
         currentArtistUI.textContent = song.artist;
         
-        // Feed the structural direct streaming link to our audio engine
-        audioEngine.src = makeStreamUrl(song.driveFileId);
-        audioEngine.load();
-        audioEngine.play();
-
-        // Increment dynamic structural play count tracking
-        incrementPlayCount(song.id);
-
-        // Instantly patch updated badge value directly inside the list without refreshing elements
-        const badge = document.getElementById(`badge-${song.id}`);
-        if(badge) {
-            badge.textContent = `▶ ${getPlayCount(song.id)} plays`;
+        if (playerEngine && playerEngine.loadVideoById) {
+            playerEngine.loadVideoById(song.driveFileId);
+            playerEngine.playVideo();
         }
 
-        // Redraw highlights on list items
+        incrementPlayCount(song.id);
+        const badge = document.getElementById(`badge-${song.id}`);
+        if(badge) badge.textContent = `▶ ${getPlayCount(song.id)} plays`;
+
         document.querySelectorAll('.track-item').forEach(item => {
             item.classList.toggle('active', item.dataset.id === song.id);
         });
     }
 
-    // Initial load configurations on program start
+    function togglePlayback() {
+        if (!playerEngine || !currentTrackId) return;
+        if (isPlaying) {
+            playerEngine.pauseVideo();
+        } else {
+            playerEngine.playVideo();
+        }
+    }
+
     updateGlobalSummary();
     renderPlaylist();
 </script>
-
 </body>
 </html>
