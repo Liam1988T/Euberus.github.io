@@ -53,6 +53,8 @@
         
         #yt-engine { width: 1px; height: 1px; position: absolute; left: -9999px; opacity: 0; }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
@@ -61,7 +63,7 @@
     <div class="header">
         <div>
             <h1>Euberus Cloud Player</h1>
-            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v2.0.0-gitSync</span>
+            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v3.0.0-Cloud</span>
         </div>
         <div class="stats-summary" id="global-counter">Total Session Plays: 0</div>
     </div>
@@ -92,12 +94,24 @@
 <div id="yt-engine"></div>
 
 <script>
-    // 🏠 MASTER GITHUB DATABASE (Your real database file)
-    const MASTER_SONGS_DATABASE = [
-        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" },
-        { id: "track_2", title: "Yin Wei Ai Suo Yi Ai", artist: "Nicholas Tse", driveFileId: "BF2JQYwV9_8" }
-    ];
+    // Live Firebase Credentials
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYnsN9UWtkBxLYTgbe21tpIczGhrni7T8",
+        authDomain: "euberus-ed3b4.firebaseapp.com",
+        databaseURL: "https://euberus-ed3b4-default-rtdb.firebaseio.com",
+        projectId: "euberus-ed3b4",
+        storageBucket: "euberus-ed3b4.firebasestorage.app",
+        messagingSenderId: "206163602431",
+        appId: "1:206163602431:web:70247c1e16d7faae8d95ca",
+        measurementId: "G-KQD0965JJL"
+    };
 
+    // Connect Engine
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const songsRef = database.ref('songs');
+
+    let songsDatabase = [];
     const playlistUI = document.getElementById('playlist');
     const currentTitleUI = document.getElementById('current-title');
     const currentArtistUI = document.getElementById('current-artist');
@@ -112,11 +126,21 @@
     let isPlaying = false;
     let isRepeatMode = false;
 
+    // Direct Cloud Real-time Observer Node
+    songsRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        songsDatabase = [];
+        if (data) {
+            Object.keys(data).forEach(key => {
+                songsDatabase.push({ firebaseKey: key, ...data[key] });
+            });
+        }
+        renderPlaylist();
+    });
+
     window.onYouTubeIframeAPIReady = function() {
         playerEngine = new YT.Player('yt-engine', {
-            height: '1',
-            width: '1',
-            videoId: '',
+            height: '1', width: '1', videoId: '',
             playerVars: { 'autoplay': 0, 'controls': 0, 'disablekb': 1 },
             events: {
                 'onStateChange': (e) => {
@@ -154,8 +178,12 @@
 
     function renderPlaylist() {
         playlistUI.innerHTML = '';
+        if(songsDatabase.length === 0) {
+            playlistUI.innerHTML = '<li style="padding: 15px; color: var(--text-muted); text-align:center;">Cloud database is empty. Add songs using admin panel!</li>';
+            return;
+        }
         
-        MASTER_SONGS_DATABASE.forEach((song, index) => {
+        songsDatabase.forEach((song, index) => {
             const li = document.createElement('li');
             li.className = `track-item ${currentTrackIndex === index ? 'active' : ''}`;
             li.innerHTML = `
@@ -172,10 +200,10 @@
     }
 
     function loadAndPlayTrack(index) {
-        if (index < 0 || index >= MASTER_SONGS_DATABASE.length) return;
+        if (index < 0 || index >= songsDatabase.length) return;
         
         currentTrackIndex = index;
-        const song = MASTER_SONGS_DATABASE[index];
+        const song = songsDatabase[index];
         
         currentTitleUI.textContent = song.title;
         currentArtistUI.textContent = song.artist;
@@ -204,57 +232,30 @@
             return;
         }
         prevBtn.style.visibility = (currentTrackIndex === 0) ? "hidden" : "visible";
-        nextBtn.style.visibility = (currentTrackIndex === MASTER_SONGS_DATABASE.length - 1) ? "hidden" : "visible";
+        nextBtn.style.visibility = (currentTrackIndex === songsDatabase.length - 1) ? "hidden" : "visible";
     }
 
-    function playPrevious() {
-        if (currentTrackIndex > 0) {
-            loadAndPlayTrack(currentTrackIndex - 1);
-        }
-    }
-
-    function playNext() {
-        if (currentTrackIndex < MASTER_SONGS_DATABASE.length - 1) {
-            loadAndPlayTrack(currentTrackIndex + 1);
-        }
-    }
+    function playPrevious() { if (currentTrackIndex > 0) loadAndPlayTrack(currentTrackIndex - 1); }
+    function playNext() { if (currentTrackIndex < songsDatabase.length - 1) loadAndPlayTrack(currentTrackIndex + 1); }
 
     function togglePlayback() {
         if (!playerEngine) return;
-        if (currentTrackIndex === -1 && MASTER_SONGS_DATABASE.length > 0) {
-            loadAndPlayTrack(0);
-            return;
-        }
-        if (isPlaying) {
-            playerEngine.pauseVideo();
-        } else {
-            playerEngine.playVideo();
-        }
+        if (currentTrackIndex === -1 && songsDatabase.length > 0) { loadAndPlayTrack(0); return; }
+        if (isPlaying) playerEngine.pauseVideo(); else playerEngine.playVideo();
     }
 
     function toggleRepeat() {
         isRepeatMode = !isRepeatMode;
-        if (isRepeatMode) {
-            repeatBtn.classList.add('active');
-            repeatBtn.textContent = "🔁 Repeat: ON";
-        } else {
-            repeatBtn.classList.remove('active');
-            repeatBtn.textContent = "🔁 Repeat: OFF";
-        }
+        if (isRepeatMode) { repeatBtn.classList.add('active'); repeatBtn.textContent = "🔁 Repeat: ON"; }
+        else { repeatBtn.classList.remove('active'); repeatBtn.textContent = "🔁 Repeat: OFF"; }
     }
 
     function handleTrackEnded() {
-        if (isRepeatMode) {
-            if (playerEngine && playerEngine.playVideo) playerEngine.playVideo();
-        } else {
-            if (currentTrackIndex < MASTER_SONGS_DATABASE.length - 1) {
-                playNext();
-            }
-        }
+        if (isRepeatMode) { if (playerEngine && playerEngine.playVideo) playerEngine.playVideo(); }
+        else { if (currentTrackIndex < songsDatabase.length - 1) playNext(); }
     }
 
     updateGlobalSummary();
-    renderPlaylist();
 </script>
 </body>
 </html>
