@@ -265,9 +265,10 @@
 
     let currentTrackId = null;
 
-    // Helper to generate correct direct streaming URL from a Google Drive ID
+   // Helper to generate a reliable direct streaming audio source wrapper
     function makeStreamUrl(fileId) {
-       return `https://tworocks.co/embed/${fileId}`;
+        // Uses Google's dedicated content delivery CDN to serve raw file streams directly
+        return `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
     }
 
     // Helper to get play count safely from LocalStorage
