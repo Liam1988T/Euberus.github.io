@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Euberus Cloud Player</title>
     <style>
-        :root { --bg-color: #0f172a; --panel-color: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8; --track-hover: #334155; }
+        :root { --bg-color: #0f172a; --panel-color: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #0c1220; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .dashboard { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
@@ -14,8 +14,10 @@
         .content { display: grid; grid-template-columns: 1fr 1fr; padding: 20px; gap: 20px; }
         .track-list { list-style: none; }
         .track-item { background: rgba(0,0,0,0.2); padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .track-item:hover { background: #334155; }
         .player-panel { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
         button { cursor: pointer; border: none; background: var(--accent-color); color: #0f172a; padding: 10px 30px; border-radius: 20px; font-weight: bold; margin-top: 15px; }
+        #yt-engine { position: absolute; left: -9999px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -26,7 +28,7 @@
 <div class="dashboard">
     <div class="header">
         <h1>Euberus Cloud Player</h1>
-        <div style="font-size: 12px; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 20px;">Total Session Plays: 0</div>
+        <div style="font-size: 12px; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 20px;">v3.0.0-Cloud</div>
     </div>
     <div class="content">
         <div>
@@ -36,8 +38,8 @@
         <div class="player-panel">
             <div style="font-size: 40px; margin-bottom: 10px;">🎵</div>
             <div id="current-title" style="font-weight:bold;">Select a track</div>
-            <button onclick="togglePlayback()">PLAY</button>
-            <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted);">Repeat: OFF</div>
+            <button id="master-play" onclick="togglePlayback()">PLAY</button>
+            <button onclick="nextSong()">NEXT</button>
         </div>
     </div>
 </div>
@@ -56,24 +58,47 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const songsRef = firebase.database().ref('songs');
+    let player, songs = [], currentIdx = 0;
 
-    // Force data load immediately upon startup
-    songsRef.once('value', (snapshot) => {
+    firebase.database().ref('songs').once('value', (snapshot) => {
         const data = snapshot.val();
-        const list = document.getElementById('playlist');
         if(data) {
-            Object.values(data).forEach(song => {
+            songs = Object.values(data);
+            const list = document.getElementById('playlist');
+            songs.forEach((song, index) => {
                 const li = document.createElement('li');
                 li.className = 'track-item';
                 li.innerHTML = `<div><strong>${song.title}</strong><br><small>${song.artist}</small></div>`;
-                li.onclick = () => document.getElementById('current-title').textContent = song.title;
+                li.onclick = () => playTrack(index);
                 list.appendChild(li);
             });
         }
     });
 
-    function togglePlayback() { alert("Playback engine connected."); }
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('yt-engine', {
+            height: '1', width: '1',
+            events: { 'onStateChange': (e) => { if(e.data === 0) nextSong(); } }
+        });
+    }
+
+    function playTrack(idx) {
+        currentIdx = idx;
+        player.loadVideoById(songs[idx].driveFileId);
+        player.playVideo();
+        document.getElementById('current-title').textContent = songs[idx].title;
+        document.getElementById('master-play').textContent = 'PAUSE';
+    }
+
+    function togglePlayback() {
+        if (player.getPlayerState() === 1) { player.pauseVideo(); document.getElementById('master-play').textContent = 'PLAY'; }
+        else { player.playVideo(); document.getElementById('master-play').textContent = 'PAUSE'; }
+    }
+
+    function nextSong() {
+        currentIdx = (currentIdx + 1) % songs.length;
+        playTrack(currentIdx);
+    }
 </script>
 </body>
 </html>
