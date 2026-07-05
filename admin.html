@@ -168,7 +168,57 @@
             alert("Please paste a valid sync package string first.");
             return;
         }
-        
+        // --- SYNC EXPORT LOGIC ---
+function exportData() {
+    // Replace 'euberus_song_library' with your exact localStorage key name if it is different
+    const storageKey = 'euberus_song_library'; 
+    const songs = JSON.parse(localStorage.getItem(storageKey)) || [];
+    
+    if (songs.length === 0) {
+        alert("Your library sandbox is currently empty. Nothing to export!");
+        return;
+    }
+    
+    // Package data safely to avoid string corruption during clipboard transfers
+    const cleanString = btoa(unescape(encodeURIComponent(JSON.stringify(songs))));
+    const textContainer = document.getElementById('sync-string');
+    textContainer.value = cleanString;
+    
+    textContainer.select();
+    document.execCommand('copy');
+    alert("Data package successfully compiled and copied to your clipboard!");
+}
+
+// --- SYNC IMPORT LOGIC ---
+function importData() {
+    const storageKey = 'euberus_song_library';
+    const inputString = document.getElementById('sync-string').value.trim();
+    
+    if (!inputString) {
+        alert("Please paste a sync package string into the text field first.");
+        return;
+    }
+    
+    try {
+        const parsedJSON = JSON.parse(decodeURIComponent(escape(atob(inputString))));
+        if (Array.isArray(parsedJSON)) {
+            localStorage.setItem(storageKey, JSON.stringify(parsedJSON));
+            alert("Library package imported successfully! Your track list has been refreshed.");
+            
+            // Call your custom display function here to refresh the UI list instantly
+            // (e.g., renderPlaylist(), loadSongs(), or updateUI() depending on your script)
+            if (typeof renderAdminList === "function") renderAdminList();
+            else if (typeof displaySongs === "function") displaySongs();
+            else location.reload(); // Quick fallback to refresh page elements safely
+            
+            document.getElementById('sync-string').value = '';
+        } else {
+            alert("Invalid data layout formatting inside payload package.");
+        }
+    } catch (err) {
+        alert("Parsing failed. Make sure you copied the complete code chunk cleanly.");
+    }
+}
         try {
             const parsedJSON = JSON.parse(decodeURIComponent(escape(atob(inputString))));
             if (Array.isArray(parsedJSON)) {
