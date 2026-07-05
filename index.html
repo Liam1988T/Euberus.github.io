@@ -61,7 +61,7 @@
     <div class="header">
         <div>
             <h1>Euberus Cloud Player</h1>
-            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v1.2.0-dynamic</span>
+            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v2.0.0-gitSync</span>
         </div>
         <div class="stats-summary" id="global-counter">Total Session Plays: 0</div>
     </div>
@@ -92,22 +92,12 @@
 <div id="yt-engine"></div>
 
 <script>
-    // Hardcoded fallback ONLY used if database is wiped completely blank
-    const defaultMockData = [
-        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" }
+    // 🏠 MASTER GITHUB DATABASE (Your real database file)
+    const MASTER_SONGS_DATABASE = [
+        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" },
+        { id: "track_2", title: "Yin Wei Ai Suo Yi Ai", artist: "Nicholas Tse", driveFileId: "BF2JQYwV9_8" }
     ];
 
-    // Always fetch directly from your Vercel local environment instance
-    function loadCentralLibrary() {
-        const data = localStorage.getItem('euberus_song_library');
-        if (!data) {
-            localStorage.setItem('euberus_song_library', JSON.stringify(defaultMockData));
-            return defaultMockData;
-        }
-        return JSON.parse(data);
-    }
-
-    let songsDatabase = loadCentralLibrary();
     const playlistUI = document.getElementById('playlist');
     const currentTitleUI = document.getElementById('current-title');
     const currentArtistUI = document.getElementById('current-artist');
@@ -164,9 +154,8 @@
 
     function renderPlaylist() {
         playlistUI.innerHTML = '';
-        songsDatabase = loadCentralLibrary(); // Always grab dynamic fresh items
         
-        songsDatabase.forEach((song, index) => {
+        MASTER_SONGS_DATABASE.forEach((song, index) => {
             const li = document.createElement('li');
             li.className = `track-item ${currentTrackIndex === index ? 'active' : ''}`;
             li.innerHTML = `
@@ -183,10 +172,10 @@
     }
 
     function loadAndPlayTrack(index) {
-        if (index < 0 || index >= songsDatabase.length) return;
+        if (index < 0 || index >= MASTER_SONGS_DATABASE.length) return;
         
         currentTrackIndex = index;
-        const song = songsDatabase[index];
+        const song = MASTER_SONGS_DATABASE[index];
         
         currentTitleUI.textContent = song.title;
         currentArtistUI.textContent = song.artist;
@@ -215,7 +204,7 @@
             return;
         }
         prevBtn.style.visibility = (currentTrackIndex === 0) ? "hidden" : "visible";
-        nextBtn.style.visibility = (currentTrackIndex === songsDatabase.length - 1) ? "hidden" : "visible";
+        nextBtn.style.visibility = (currentTrackIndex === MASTER_SONGS_DATABASE.length - 1) ? "hidden" : "visible";
     }
 
     function playPrevious() {
@@ -225,14 +214,14 @@
     }
 
     function playNext() {
-        if (currentTrackIndex < songsDatabase.length - 1) {
+        if (currentTrackIndex < MASTER_SONGS_DATABASE.length - 1) {
             loadAndPlayTrack(currentTrackIndex + 1);
         }
     }
 
     function togglePlayback() {
         if (!playerEngine) return;
-        if (currentTrackIndex === -1 && songsDatabase.length > 0) {
+        if (currentTrackIndex === -1 && MASTER_SONGS_DATABASE.length > 0) {
             loadAndPlayTrack(0);
             return;
         }
@@ -258,7 +247,7 @@
         if (isRepeatMode) {
             if (playerEngine && playerEngine.playVideo) playerEngine.playVideo();
         } else {
-            if (currentTrackIndex < songsDatabase.length - 1) {
+            if (currentTrackIndex < MASTER_SONGS_DATABASE.length - 1) {
                 playNext();
             }
         }
