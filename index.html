@@ -3,22 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euberus Cloud Player</title>
+    <title>Euberus Premium Stream</title>
     <style>
-        :root { --bg-color: #0f172a; --panel-color: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #0c1220; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .dashboard { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
-        .header { padding: 20px; background: #0284c7; display: flex; justify-content: space-between; align-items: center; }
-        .content { display: grid; grid-template-columns: 1fr 1fr; padding: 20px; gap: 20px; }
-        .track-list { list-style: none; }
-        .track-item { background: rgba(0,0,0,0.2); padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .track-item:hover { background: #334155; }
-        .player-panel { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .controls { display: flex; gap: 25px; margin-top: 25px; align-items: center; }
-        .btn-main { background: var(--accent-color); color: #0f172a; padding: 12px 40px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; }
-        .btn-ctrl { background: none; border: none; cursor: pointer; color: #64748b; padding: 8px; }
-        .btn-ctrl.active { color: var(--accent-color); }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --glass: rgba(255, 255, 255, 0.05); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .dashboard { width: 100%; max-width: 850px; background: var(--panel); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .track-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .track-item { padding: 16px 20px; background: var(--glass); border-radius: 16px; cursor: pointer; display: flex; align-items: center; transition: 0.3s; }
+        .track-item:hover { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); }
+        
+        .player-panel { text-align: center; padding: 32px; background: rgba(0,0,0,0.2); border-radius: 20px; }
+        .btn-icon { background: none; border: none; cursor: pointer; color: var(--accent); padding: 10px; border-radius: 50%; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: rgba(56, 189, 248, 0.2); transform: scale(1.1); }
+        
+        /* Premium Repeat Toggle States */
+        #repeat-btn { color: #64748b; }
+        #repeat-btn.active { color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+        
+        #master-play { background: var(--accent); color: #0f172a; padding: 15px 40px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; margin-bottom: 20px; }
         #yt-engine { position: absolute; left: -9999px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -28,21 +32,18 @@
 <body>
 
 <div class="dashboard">
-    <div class="header"><h1>Euberus Cloud Player</h1></div>
-    <div class="content">
-        <div>
-            <div style="color:var(--text-muted); font-size: 12px; margin-bottom: 10px;">AVAILABLE TRACKS</div>
-            <ul class="track-list" id="playlist"></ul>
-        </div>
+    <h2 style="margin-bottom: 24px; letter-spacing: -0.5px;">Euberus Cloud Library</h2>
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 32px;">
+        <ul class="track-list" id="playlist"></ul>
         <div class="player-panel">
-            <div id="current-title" style="font-weight:bold; margin-bottom: 20px;">Select a track</div>
-            <button class="btn-main" id="master-play" onclick="togglePlayback()">PLAY</button>
-            <div class="controls">
-                <button class="btn-ctrl" id="repeat-btn" onclick="toggleRepeat()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2v4a2 2 0 0 1-2 2H3M7 22v-4a2 2 0 0 1 2-2h12"/></svg>
+            <div id="current-title" style="margin-bottom: 20px; font-weight: 600; opacity: 0.8;">Select a track</div>
+            <button id="master-play" onclick="togglePlayback()">PLAY</button>
+            <div style="display: flex; justify-content: center; gap: 30px;">
+                <button class="btn-icon" id="repeat-btn" onclick="toggleRepeat()" title="Toggle Repeat">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2v4a2 2 0 0 1-2 2H3M7 22v-4a2 2 0 0 1 2-2h12"/></svg>
                 </button>
-                <button class="btn-ctrl" onclick="nextSong()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                <button class="btn-icon" onclick="nextSong()">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
                 </button>
             </div>
         </div>
@@ -65,8 +66,7 @@
     firebase.initializeApp(firebaseConfig);
     let player, songs = [], currentIdx = 0, repeat = false;
 
-    // Use .once('value') to force a clean HTTPS fetch for mobile reliability
-    firebase.database().ref('songs').once('value').then(snapshot => {
+    firebase.database().ref('songs').once('value', snapshot => {
         const data = snapshot.val();
         if(data) {
             songs = Object.values(data);
@@ -74,12 +74,12 @@
             songs.forEach((s, i) => {
                 const li = document.createElement('li');
                 li.className = 'track-item';
-                li.innerHTML = `<div><strong>${s.title}</strong><br><small style="color:var(--accent-color)">${s.artist}</small></div>`;
+                li.innerHTML = `<div><strong>${s.title}</strong><br><small style="color:var(--accent)">${s.artist}</small></div>`;
                 li.onclick = () => playTrack(i);
                 list.appendChild(li);
             });
         }
-    }).catch(err => console.error("Database connection error: ", err));
+    });
 
     function onYouTubeIframeAPIReady() {
         player = new YT.Player('yt-engine', { height: '1', width: '1', events: { 'onStateChange': e => { if(e.data === 0) nextSong(); } } });
