@@ -10,13 +10,13 @@
         body { background-color: #0c1220; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .dashboard { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
         .header { padding: 20px; background: #0284c7; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 20px; }
         .content { display: grid; grid-template-columns: 1fr 1fr; padding: 20px; gap: 20px; }
         .track-list { list-style: none; }
-        .track-item { background: rgba(0,0,0,0.2); padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .track-item:hover { background: #334155; }
+        .track-item { background: rgba(0,0,0,0.2); padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; }
         .player-panel { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        button { cursor: pointer; border: none; background: var(--accent-color); color: #0f172a; padding: 10px 30px; border-radius: 20px; font-weight: bold; margin-top: 15px; }
+        .controls { display: flex; gap: 15px; margin-top: 20px; align-items: center; }
+        button { cursor: pointer; border: none; background: transparent; color: var(--accent-color); font-size: 24px; }
+        #master-play { background: var(--accent-color); color: #0f172a; padding: 10px 30px; border-radius: 20px; font-weight: bold; font-size: 16px; }
         #yt-engine { position: absolute; left: -9999px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -28,7 +28,6 @@
 <div class="dashboard">
     <div class="header">
         <h1>Euberus Cloud Player</h1>
-        <div style="font-size: 12px; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 20px;">v3.0.0-Cloud</div>
     </div>
     <div class="content">
         <div>
@@ -39,7 +38,10 @@
             <div style="font-size: 40px; margin-bottom: 10px;">🎵</div>
             <div id="current-title" style="font-weight:bold;">Select a track</div>
             <button id="master-play" onclick="togglePlayback()">PLAY</button>
-            <button onclick="nextSong()">NEXT</button>
+            <div class="controls">
+                <button id="repeat-btn" onclick="toggleRepeat()">🔁</button>
+                <button onclick="nextSong()">⏭</button>
+            </div>
         </div>
     </div>
 </div>
@@ -58,7 +60,7 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    let player, songs = [], currentIdx = 0;
+    let player, songs = [], currentIdx = 0, repeat = false;
 
     firebase.database().ref('songs').once('value', (snapshot) => {
         const data = snapshot.val();
@@ -76,10 +78,7 @@
     });
 
     function onYouTubeIframeAPIReady() {
-        player = new YT.Player('yt-engine', {
-            height: '1', width: '1',
-            events: { 'onStateChange': (e) => { if(e.data === 0) nextSong(); } }
-        });
+        player = new YT.Player('yt-engine', { height: '1', width: '1', events: { 'onStateChange': (e) => { if(e.data === 0) nextSong(); } } });
     }
 
     function playTrack(idx) {
@@ -96,8 +95,13 @@
     }
 
     function nextSong() {
-        currentIdx = (currentIdx + 1) % songs.length;
-        playTrack(currentIdx);
+        if (repeat) { playTrack(currentIdx); }
+        else { currentIdx = (currentIdx + 1) % songs.length; playTrack(currentIdx); }
+    }
+
+    function toggleRepeat() {
+        repeat = !repeat;
+        document.getElementById('repeat-btn').style.opacity = repeat ? "1" : "0.5";
     }
 </script>
 </body>
