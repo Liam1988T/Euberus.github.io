@@ -3,233 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euberus Stream - Admin Dashboard</title>
+    <title>Euberus Stream - Admin Panel</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --panel-color: #1e293b;
             --accent-color: #38bdf8;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --border-color: #334155;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 40px 20px; display: flex; justify-content: center; }
+        .admin-container { width: 100%; max-width: 700px; background-color: var(--panel-color); border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        h1 { font-size: 22px; margin-bottom: 20px; color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        h2 { font-size: 16px; margin: 25px 0 10px 0; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Hide content until authenticated */
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            padding: 40px 20px; 
-            display: none; /* Controlled by JavaScript password gate */
-            justify-content: center; 
-        }
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 14px; color: var(--text-muted); }
+        input, textarea { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 6px; font-size: 14px; }
+        input:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
         
-        .admin-container { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 16px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        h1 { font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
-        h1 span { font-size: 14px; color: var(--accent-color); }
-
-        .form-section { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 30px; }
-        .form-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
-        @media(min-width: 600px) { .form-grid { grid-template-columns: 1fr 1fr; } .full-width { grid-column: span 2; } }
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        button { cursor: pointer; padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+        .btn-primary { background-color: var(--accent-color); color: #0f172a; }
+        .btn-primary:hover { background-color: #7dd3fc; }
+        .btn-secondary { background-color: #334155; color: var(--text-main); }
+        .btn-secondary:hover { background-color: #475569; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
         
-        label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; }
-        input { width: 100%; background: #0f172a; border: 1px solid #475569; padding: 10px; border-radius: 6px; color: #fff; font-size: 14px; }
-        input:focus { border-color: var(--accent-color); outline: none; }
+        .sync-box { background-color: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); padding: 15px; border-radius: 8px; margin-top: 15px; }
         
-        button { cursor: pointer; padding: 10px 20px; border-radius: 6px; font-weight: 600; border: none; transition: background 0.2s; }
-        .btn-primary { background: var(--accent-color); color: #0f172a; }
-        .btn-primary:hover { background: #7dd3fc; }
-        .btn-danger { background: var(--danger-color); color: white; padding: 6px 12px; font-size: 13px; }
-        .btn-danger:hover { background: #f87171; }
-        
-        .song-list-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
-        th { color: var(--text-muted); font-size: 13px; text-transform: uppercase; }
-        tr:hover { background: rgba(255,255,255,0.01); }
-        .actions-cell { display: flex; gap: 8px; }
-        .btn-edit { background: #e2e8f0; color: #1e293b; padding: 6px 12px; font-size: 13px; }
+        .track-list { list-style: none; margin-top: 15px; }
+        .track-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 8px; font-size: 14px; border: 1px solid rgba(255,255,255,0.02); }
+        .track-meta { color: var(--text-muted); font-size: 12px; }
     </style>
 </head>
 <body>
 
-<script>
-    // --- PASSWORD GATE SYSTEM ---
-    // Change 'Liam2026' to whatever private password you prefer!
-    const ADMIN_PASSWORD = "Liam2026"; 
-
-    // Prompt user immediately before anything renders
-    const accessAttempt = prompt("Access Restricted. Please enter the Administrator Password:");
-
-    if (accessAttempt === ADMIN_PASSWORD) {
-        // Correct password -> Let the page show
-        document.body.style.display = "flex";
-    } else {
-        // Wrong password -> Boot them out to the main player page
-        alert("Incorrect password. Access Denied.");
-        window.location.href = "index.html";
-    }
-</script>
-
 <div class="admin-container">
-    <h1>Song Management Center <span>Admin Panel</span></h1>
+    <h1>Euberus Control Dashboard</h1>
+    
+    <!-- ADD TRACK FORM -->
+    <form id="track-form" onsubmit="addSong(event)">
+        <div class="form-group">
+            <label>Song Title</label>
+            <input type="text" id="title" required placeholder="e.g., Because You're My Woman">
+        </div>
+        <div class="form-group">
+            <label>Artist Name</label>
+            <input type="text" id="artist" required placeholder="e.g., Lee Seung Gi">
+        </div>
+        <div class="form-group">
+            <label>YouTube Video ID</label>
+            <input type="text" id="driveFileId" required placeholder="e.g., e8zl1u2plOQ">
+        </div>
+        <button type="submit" class="btn-primary">➕ Add Track to Sandbox</button>
+    </form>
 
-    <div class="form-section">
-        <h3 id="form-title" style="margin-bottom: 15px; color: var(--accent-color);">Add New Song Track</h3>
-        <form id="song-form">
-            <input type="hidden" id="edit-track-id">
-            <div class="form-grid">
-                <div>
-                    <label>Song Title</label>
-                    <input type="text" id="song-title" placeholder="e.g., Summer Chill Melody" required>
-                </div>
-                <div>
-                    <label>Artist Name</label>
-                    <input type="text" id="song-artist" placeholder="e.g., Audio Production" required>
-                </div>
-                <div class="full-width">
-                    <label>Google Drive File ID</label>
-                    <input type="text" id="song-drive-id" placeholder="Paste the long alphanumeric file ID string here" required>
-                </div>
-            </div>
-            <button type="submit" class="btn-primary" id="btn-submit">Save Song Track</button>
-            <button type="button" id="btn-cancel" style="background:#475569; color:white; display:none; margin-left:10px;">Cancel Edit</button>
-        </form>
+    <!-- CROSS-DOMAIN DATA SYNC UTILITY -->
+    <h2>🔗 Domain Data Sync Tools</h2>
+    <div class="sync-box">
+        <div class="form-group">
+            <label>Sync Package String</label>
+            <textarea id="sync-string" rows="3" placeholder="Paste data package string here to import, or click Export..."></textarea>
+        </div>
+        <div class="btn-row">
+            <button type="button" class="btn-secondary" onclick="exportData()">📤 Export Package</button>
+            <button type="button" class="btn-primary" onclick="importData()" style="background-color: var(--success-color); color: white;">📥 Import Package</button>
+        </div>
     </div>
 
-    <h3>Current Loaded Library</h3>
-    <table class="song-list-table">
-        <thead>
-            <tr>
-                <th>Title / Artist</th>
-                <th>Drive File ID</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="admin-table-body">
-            </tbody>
-    </table>
+    <!-- TRACK MANAGEMENT SUMMARY -->
+    <h2>📦 Current Track Inventory</h2>
+    <ul class="track-list" id="admin-playlist"></ul>
 </div>
 
 <script>
-    const defaultData = [];
+    const defaultMockData = [
+        { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" }
+    ];
 
     function getLibrary() {
         const data = localStorage.getItem('euberus_song_library');
         if (!data) {
-            localStorage.setItem('euberus_song_library', JSON.stringify(defaultData));
-            return defaultData;
+            localStorage.setItem('euberus_song_library', JSON.stringify(defaultMockData));
+            return defaultMockData;
         }
         return JSON.parse(data);
     }
 
-    function saveLibrary(arr) {
-        localStorage.setItem('euberus_song_library', JSON.stringify(arr));
-        renderTable();
-    }
-
-    const tableBody = document.getElementById('admin-table-body');
-    const songForm = document.getElementById('song-form');
-    const editIdInput = document.getElementById('edit-track-id');
-    const titleInput = document.getElementById('song-title');
-    const artistInput = document.getElementById('song-artist');
-    const driveIdInput = document.getElementById('song-drive-id');
-    const formTitle = document.getElementById('form-title');
-    const btnSubmit = document.getElementById('btn-submit');
-    const btnCancel = document.getElementById('btn-cancel');
-
-    function renderTable() {
-        const library = getLibrary();
-        tableBody.innerHTML = '';
+    function renderAdminList() {
+        const songs = getLibrary();
+        const container = document.getElementById('admin-playlist');
+        container.innerHTML = '';
         
-        if(library.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No songs found. Add one above!</td></tr>`;
-            return;
-        }
-
-        library.forEach(song => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div style="font-weight:600;">${song.title}</div>
-                    <div style="font-size:12px; color:var(--text-muted);">${song.artist}</div>
-                </td>
-                <td style="font-family:monospace; font-size:12px; color:var(--accent-color); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ${song.driveFileId}
-                </td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="btn-edit" onclick="startEdit('${song.id}')">Modify</button>
-                        <button class="btn-danger" onclick="deleteTrack('${song.id}')">Delete</button>
-                    </div>
-                </td>
+        songs.forEach((song, index) => {
+            const li = document.createElement('li');
+            li.className = 'track-item';
+            li.innerHTML = `
+                <div>
+                    <strong>${song.title}</strong> - ${song.artist}
+                    <div class="track-meta">ID: ${song.driveFileId}</div>
+                </div>
+                <button class="btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="deleteSong(${index})">Delete</button>
             `;
-            tableBody.appendChild(tr);
+            container.appendChild(li);
         });
     }
 
-    songForm.addEventListener('submit', (e) => {
+    function addSong(e) {
         e.preventDefault();
-        let library = getLibrary();
-        const editId = editIdInput.value;
+        const songs = getLibrary();
+        
+        const newSong = {
+            id: "track_" + Date.now(),
+            title: document.getElementById('title').value,
+            artist: document.getElementById('artist').value,
+            driveFileId: document.getElementById('driveFileId').value
+        };
+        
+        songs.push(newSong);
+        localStorage.setItem('euberus_song_library', JSON.stringify(songs));
+        document.getElementById('track-form').reset();
+        renderAdminList();
+    }
 
-        if (editId) {
-            library = library.map(item => {
-                if(item.id === editId) {
-                    return { ...item, title: titleInput.value, artist: artistInput.value, driveFileId: driveIdInput.value };
-                }
-                return item;
-            });
-            clearFormState();
-        } else {
-            const newSong = {
-                id: 'track_' + Date.now(),
-                title: titleInput.value,
-                artist: artistInput.value,
-                driveFileId: driveIdInput.value
-            };
-            library.push(newSong);
-            songForm.reset();
+    function deleteSong(index) {
+        const songs = getLibrary();
+        songs.splice(index, 1);
+        localStorage.setItem('euberus_song_library', JSON.stringify(songs));
+        renderAdminList();
+    }
+
+    // --- SYNC EXPORT LOGIC ---
+    function exportData() {
+        const songs = getLibrary();
+        // Convert to base64 payload to prevent browser paste truncation errors
+        const cleanString = btoa(unescape(encodeURIComponent(JSON.stringify(songs))));
+        document.getElementById('sync-string').value = cleanString;
+        
+        document.getElementById('sync-string').select();
+        document.execCommand('copy');
+        alert("Data package string exported and copied to clipboard automatically!");
+    }
+
+    // --- SYNC IMPORT LOGIC ---
+    function importData() {
+        const inputString = document.getElementById('sync-string').value.trim();
+        if (!inputString) {
+            alert("Please paste a valid sync package string first.");
+            return;
         }
-
-        saveLibrary(library);
-    });
-
-    window.startEdit = function(id) {
-        const item = getLibrary().find(s => s.id === id);
-        if(!item) return;
-
-        editIdInput.value = item.id;
-        titleInput.value = item.title;
-        artistInput.value = item.artist;
-        driveIdInput.value = item.driveFileId;
-
-        formTitle.textContent = "Modify Selected Song Track Details";
-        btnSubmit.textContent = "Apply Changes";
-        btnCancel.style.display = "inline-block";
-    }
-
-    window.deleteTrack = function(id) {
-        if(confirm("Are you sure you want to remove this track?")) {
-            let library = getLibrary();
-            library = library.filter(s => s.id !== id);
-            saveLibrary(library);
-            if(editIdInput.value === id) clearFormState();
+        
+        try {
+            const parsedJSON = JSON.parse(decodeURIComponent(escape(atob(inputString))));
+            if (Array.isArray(parsedJSON)) {
+                localStorage.setItem('euberus_song_library', JSON.stringify(parsedJSON));
+                alert("Library package imported successfully! Your track list is now matched.");
+                renderAdminList();
+                document.getElementById('sync-string').value = '';
+            } else {
+                alert("Invalid data payload formatting.");
+            }
+        } catch (err) {
+            alert("Failed to parse data string. Make sure you copied the whole code block cleanly.");
         }
     }
 
-    btnCancel.addEventListener('click', clearFormState);
-
-    function clearFormState() {
-        songForm.reset();
-        editIdInput.value = "";
-        formTitle.textContent = "Add New Song Track";
-        btnSubmit.textContent = "Save Song Track";
-        btnCancel.style.display = "none";
-    }
-
-    renderTable();
+    renderAdminList();
 </script>
 </body>
 </html>
