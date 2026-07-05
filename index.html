@@ -61,7 +61,7 @@
     <div class="header">
         <div>
             <h1>Euberus Cloud Player</h1>
-            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v1.1.1-stable</span>
+            <span style="font-size: 11px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; color: var(--accent-color); font-family: monospace; display: inline-block; margin-top: 4px;">v1.2.0-dynamic</span>
         </div>
         <div class="stats-summary" id="global-counter">Total Session Plays: 0</div>
     </div>
@@ -92,13 +92,22 @@
 <div id="yt-engine"></div>
 
 <script>
-    // 🏠 MASTER SONG DATABASE (Add lines here directly to expand your music tracklist!)
-    const songsDatabase = [
+    // Hardcoded fallback ONLY used if database is wiped completely blank
+    const defaultMockData = [
         { id: "track_1", title: "Because You're My Woman", artist: "Lee Seung Gi", driveFileId: "e8zl1u2plOQ" }
-        // To add another song, simply put a comma above and uncomment/fill out this line:
-        // ,{ id: "track_2", title: "Song Name Here", artist: "Artist Here", driveFileId: "YouTube_ID_Here" }
     ];
 
+    // Always fetch directly from your Vercel local environment instance
+    function loadCentralLibrary() {
+        const data = localStorage.getItem('euberus_song_library');
+        if (!data) {
+            localStorage.setItem('euberus_song_library', JSON.stringify(defaultMockData));
+            return defaultMockData;
+        }
+        return JSON.parse(data);
+    }
+
+    let songsDatabase = loadCentralLibrary();
     const playlistUI = document.getElementById('playlist');
     const currentTitleUI = document.getElementById('current-title');
     const currentArtistUI = document.getElementById('current-artist');
@@ -155,6 +164,7 @@
 
     function renderPlaylist() {
         playlistUI.innerHTML = '';
+        songsDatabase = loadCentralLibrary(); // Always grab dynamic fresh items
         
         songsDatabase.forEach((song, index) => {
             const li = document.createElement('li');
