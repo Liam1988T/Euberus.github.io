@@ -2,100 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Euberus Premium Stream</title>
     <style>
-        :root { 
-            --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; 
-            --text: #f8fafc; --text-muted: #94a3b8; --cyan: #22d3ee;
-        }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --cyan: #22d3ee; --text: #f8fafc; --text-muted: #94a3b8; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .dashboard { width: 100%; max-width: 850px; background: var(--panel); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         
         /* Navigation */
-        .navbar { display: flex; gap: 30px; margin-bottom: 24px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .nav-item { cursor: pointer; color: #64748b; font-weight: 600; font-size: 14px; }
+        .navbar { display: flex; gap: 30px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { cursor: pointer; color: var(--text-muted); font-weight: 600; padding: 10px 0; transition: 0.3s; }
         .nav-item.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
-        /* Track Item Styling */
-        .track-item { padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; margin-bottom: 8px; }
-        .track-item:hover { border-color: var(--accent); }
-        .track-title { color: var(--text); font-weight: 600; display: block; }
+        /* Track List & Buffering */
+        .track-item { padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .buffering-icon { width: 12px; height: 12px; border: 2px solid var(--accent); border-top: transparent; border-radius: 50%; animation: spin 1s linear infinite; display: none; margin-left: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .track-title { color: var(--accent); font-weight: 600; display: block; }
         .track-artist { color: var(--cyan); font-size: 12px; display: block; }
-        
-        /* Buffering Icon */
-        .buffering-icon { width: 12px; height: 12px; border: 2px solid var(--accent); border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Player Panel */
+        /* Player */
         .player-panel { text-align: center; padding: 32px; background: rgba(0,0,0,0.2); border-radius: 20px; }
-        #video-player { width: 100%; display: none; border-radius: 12px; margin-bottom: 15px; }
-        
-        #progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 20px; cursor: pointer; }
-        #progress-bar { height: 100%; background: var(--accent); width: 0%; border-radius: 4px; }
+        #video-player { width: 100%; display: none; border-radius: 12px; }
+        .btn-main { background: var(--accent); border: none; padding: 15px 30px; border-radius: 30px; cursor: pointer; font-weight: bold; margin: 20px 0; }
+        #progress-container { width: 100%; height: 6px; background: #334155; cursor: pointer; border-radius: 3px; overflow: hidden; }
+        #progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.1s linear; }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
     <div class="navbar">
-        <div class="nav-item active" id="nav-music" onclick="switchTab('songs', 'nav-music')">Music</div>
-        <div class="nav-item" id="nav-movies" onclick="switchTab('movies', 'nav-movies')">Movies</div>
+        <div class="nav-item active" id="nav-songs" onclick="switchTab('songs', 'nav-songs')">Music</div>
+        <div class="nav-item" id="nav-movies" onclick="switchTab('movies', 'nav-movies')">Movies & TV</div>
     </div>
     
     <div style="display: grid; grid-template-columns: 1fr 320px; gap: 32px;">
         <div class="player-panel">
-            <video id="video-player"></video>
-            <div id="status-indicator" style="font-size: 10px; color: var(--text-muted);">READY</div>
-            <div id="current-title" style="margin: 15px 0; color: var(--accent);">Select Media</div>
-            <button class="btn-main" onclick="togglePlayback()">Play/Pause</button>
+            <video id="video-player" controls></video>
+            <div id="yt-container" style="display:none"></div>
+            <div id="current-title" style="margin-top: 15px;">Select Media</div>
+            <button class="btn-main" onclick="togglePlay()">Play / Pause</button>
             <div id="progress-container" onclick="seek(event)"><div id="progress-bar"></div></div>
+            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                <button onclick="prev()">Prev</button>
+                <button onclick="next()">Next</button>
+                <button onclick="toggleRepeat()">Repeat</button>
+            </div>
         </div>
-        <ul id="playlist" class="track-list" style="list-style: none;"></ul>
+        <ul id="playlist" style="list-style:none;"></ul>
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
-
 <script>
-    let player, currentPath = 'songs', videoEl = document.getElementById('video-player');
-    
-    // Sync Logic
-    setInterval(() => {
-        if (currentPath === 'movies') {
-            const progress = (videoEl.currentTime / videoEl.duration) * 100;
-            document.getElementById('progress-bar').style.width = progress + '%';
-        } else if (player && player.getCurrentTime) {
-            const progress = (player.getCurrentTime() / player.getDuration()) * 100;
-            document.getElementById('progress-bar').style.width = progress + '%';
-        }
-    }, 500);
+    let ytPlayer, currentPath = 'songs', items = [], currentIdx = 0, isRepeat = false;
+    const videoEl = document.getElementById('video-player');
 
-    // Buffering Monitor
-    videoEl.addEventListener('waiting', () => document.querySelector('.buffering-icon').style.display = 'block');
-    videoEl.addEventListener('playing', () => document.querySelector('.buffering-icon').style.display = 'none');
-
-    function playItem(item) {
-        if (currentPath === 'movies') {
-            videoEl.style.display = 'block';
-            videoEl.src = `https://drive.google.com/uc?id=${item.driveFileId}&export=download`;
-            videoEl.play();
-        } else {
-            videoEl.style.display = 'none';
-            player.loadVideoById(item.driveFileId);
-        }
-        document.getElementById('current-title').textContent = item.title;
+    function onYouTubeIframeAPIReady() {
+        ytPlayer = new YT.Player('yt-container', { height: '1', width: '1' });
     }
 
     function switchTab(path, navId) {
         currentPath = path;
-        // ... (update active classes and reload data)
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(navId).classList.add('active');
+        
+        if (path === 'movies') {
+            document.getElementById('yt-container').style.display = 'none';
+            videoEl.style.display = 'block';
+        } else {
+            videoEl.style.display = 'none';
+            document.getElementById('yt-container').style.display = 'block';
+        }
+        loadData();
     }
-    
-    // Initialize Firebase and YouTube API here as per standard
+
+    function playItem(idx) {
+        currentIdx = idx;
+        const item = items[idx];
+        document.getElementById('current-title').textContent = item.title;
+        
+        if (currentPath === 'movies') {
+            videoEl.src = `https://drive.google.com/uc?id=${item.driveFileId}&export=download`;
+            videoEl.play();
+        } else {
+            ytPlayer.loadVideoById(item.driveFileId);
+        }
+    }
+
+    // Progress Sync Loop
+    setInterval(() => {
+        let progress = 0;
+        if (currentPath === 'movies') {
+            progress = (videoEl.currentTime / videoEl.duration) * 100;
+        } else if (ytPlayer && ytPlayer.getCurrentTime) {
+            progress = (ytPlayer.getCurrentTime() / ytPlayer.getDuration()) * 100;
+        }
+        document.getElementById('progress-bar').style.width = progress + '%';
+    }, 500);
+
+    // Placeholder for previous loadData, togglePlay, next, prev, etc...
 </script>
 </body>
 </html>
