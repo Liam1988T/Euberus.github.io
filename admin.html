@@ -16,11 +16,13 @@
 <body>
 
 <div class="container">
-    <h2>Song Management Center</h2>
+    <h2 id="form-title">Add New Song</h2>
+    <input type="hidden" id="edit-key">
     <input id="title" placeholder="Song Title">
     <input id="artist" placeholder="Artist Name">
     <input id="id" placeholder="YouTube Video ID">
-    <button onclick="addSong()" style="background: #38bdf8; color: #0f172a;">Save New Song</button>
+    <button id="save-btn" onclick="saveSong()" style="background: #38bdf8; color: #0f172a;">Save Song</button>
+    <button onclick="resetForm()" style="background: #64748b; color: white;">Cancel Edit</button>
     
     <hr style="border: 0; border-top: 1px solid #334155; margin: 30px 0;">
     
@@ -32,41 +34,66 @@
     const firebaseConfig = { apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I", authDomain: "euberus-sg.firebaseapp.com", databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "euberus-sg", storageBucket: "euberus-sg.firebasestorage.app", messagingSenderId: "320119039235", appId: "1:320119039235:web:875717ac32d9a282507536" };
     firebase.initializeApp(firebaseConfig);
 
-    // Fetch and display songs in Admin Panel
+    // Load List
     firebase.database().ref('songs').on('value', snapshot => {
         const list = document.getElementById('library-list');
         list.innerHTML = '';
         const data = snapshot.val();
         if(data) {
             Object.keys(data).forEach(key => {
-                const song = data[key];
+                const s = data[key];
                 const div = document.createElement('div');
                 div.className = 'song-row';
                 div.innerHTML = `
-                    <div><strong>${song.title}</strong><br><small>${song.artist}</small></div>
-                    <button onclick="deleteSong('${key}')" style="background: #ef4444; color: white;">Delete</button>
+                    <div><strong>${s.title}</strong><br><small>${s.artist}</small></div>
+                    <div>
+                        <button onclick="editSong('${key}', '${s.title}', '${s.artist}', '${s.driveFileId}')" style="background:#f59e0b;">Edit</button>
+                        <button onclick="deleteSong('${key}')" style="background:#ef4444; color:white;">Delete</button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
         }
     });
 
-    function addSong() {
-        const title = document.getElementById('title').value;
-        const artist = document.getElementById('artist').value;
-        const driveFileId = document.getElementById('id').value;
-        if(title && driveFileId) {
-            firebase.database().ref('songs').push({title, artist, driveFileId});
+    function saveSong() {
+        const key = document.getElementById('edit-key').value;
+        const songData = {
+            title: document.getElementById('title').value,
+            artist: document.getElementById('artist').value,
+            driveFileId: document.getElementById('id').value
+        };
+
+        if(key) {
+            firebase.database().ref('songs/' + key).update(songData);
+            alert("Updated!");
+        } else {
+            firebase.database().ref('songs').push(songData);
             alert("Added!");
-            document.getElementById('title').value = '';
-            document.getElementById('id').value = '';
         }
+        resetForm();
+    }
+
+    function editSong(key, title, artist, id) {
+        document.getElementById('edit-key').value = key;
+        document.getElementById('title').value = title;
+        document.getElementById('artist').value = artist;
+        document.getElementById('id').value = id;
+        document.getElementById('form-title').innerText = "Edit Song";
+        document.getElementById('save-btn').innerText = "Update Song";
+    }
+
+    function resetForm() {
+        document.getElementById('edit-key').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('artist').value = '';
+        document.getElementById('id').value = '';
+        document.getElementById('form-title').innerText = "Add New Song";
+        document.getElementById('save-btn').innerText = "Save Song";
     }
 
     function deleteSong(key) {
-        if(confirm("Are you sure you want to delete this track?")) {
-            firebase.database().ref('songs/' + key).remove();
-        }
+        if(confirm("Delete this track?")) firebase.database().ref('songs/' + key).remove();
     }
 </script>
 </body>
