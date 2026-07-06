@@ -13,8 +13,14 @@
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } .player-panel { order: -1; } }
         .track-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
         .track-item { padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 16px; cursor: pointer; transition: all 0.3s; border: 1px solid transparent; }
-        .track-item:hover { border: 1px solid var(--accent); transform: translateX(5px); }
+        .track-item:hover { border: 1px solid var(--accent); }
         .player-panel { text-align: center; padding: 32px; background: rgba(0,0,0,0.2); border-radius: 20px; }
+        
+        /* Status Bar */
+        #status-indicator { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 10px; transition: 0.3s; }
+        .buffering { color: var(--accent) !important; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
         .controls-row { display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 30px; }
         .btn-ctrl { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; color: #94a3b8; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .btn-main { background: var(--accent); color: #0f172a; width: 70px; height: 70px; border-radius: 50%; font-size: 28px; border: none; cursor: pointer; transition: 0.3s; }
@@ -28,9 +34,10 @@
 </head>
 <body>
 <div class="dashboard">
-    <h2 style="margin-bottom: 24px;">Euberus Soundtracks</h2>
+    <h2 style="margin-bottom: 24px;">Euberus Cloud Library</h2>
     <div class="grid-container">
         <div class="player-panel">
+            <div id="status-indicator">Ready</div>
             <div id="current-title" style="margin-bottom: 25px; font-weight: 600; font-size: 1.1em; color: var(--accent);">Select a track</div>
             <div class="controls-row">
                 <button class="btn-ctrl" onclick="prevSong()">⏮</button>
@@ -43,12 +50,12 @@
     </div>
 </div>
 <div id="yt-engine"></div>
+
 <script>
     const firebaseConfig = { apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I", authDomain: "euberus-sg.firebaseapp.com", databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "euberus-sg", storageBucket: "euberus-sg.firebasestorage.app", messagingSenderId: "320119039235", appId: "1:320119039235:web:875717ac32d9a282507536" };
     firebase.initializeApp(firebaseConfig);
     let player, songs = [], currentIdx = 0, repeat = false;
 
-    // Real-time listener: Updates UI automatically when data changes
     firebase.database().ref('songs').on('value', snapshot => {
         const data = snapshot.val();
         const list = document.getElementById('playlist');
@@ -65,9 +72,35 @@
         }
     });
 
-    function onYouTubeIframeAPIReady() { player = new YT.Player('yt-engine', { height: '1', width: '1', events: { 'onStateChange': e => { if(e.data === 0) nextSong(); } } }); }
-    function playTrack(idx) { currentIdx = idx; player.loadVideoById(songs[idx].driveFileId); player.playVideo(); document.getElementById('current-title').textContent = songs[idx].title; document.getElementById('master-play').textContent = '⏸'; }
-    function togglePlayback() { if (!player) return; if (player.getPlayerState() === 1) { player.pauseVideo(); document.getElementById('master-play').textContent = '▶'; } else { player.playVideo(); document.getElementById('master-play').textContent = '⏸'; } }
+    function onYouTubeIframeAPIReady() { 
+        player = new YT.Player('yt-engine', { 
+            height: '1', width: '1', 
+            events: { 
+                'onStateChange': e => { 
+                    const status = document.getElementById('status-indicator');
+                    if (e.data === 3) { status.textContent = "Buffering..."; status.classList.add('buffering'); }
+                    else if (e.data === 1) { status.textContent = "Streaming Live"; status.classList.remove('buffering'); }
+                    else if (e.data === 2) { status.textContent = "Paused"; status.classList.remove('buffering'); }
+                    else if (e.data === 0) { status.textContent = "Ready"; nextSong(); }
+                } 
+            } 
+        }); 
+    }
+
+    function playTrack(idx) { 
+        currentIdx = idx; 
+        player.loadVideoById(songs[idx].driveFileId); 
+        player.playVideo(); 
+        document.getElementById('current-title').textContent = songs[idx].title; 
+        document.getElementById('master-play').textContent = '⏸'; 
+    }
+    
+    function togglePlayback() { 
+        if (!player) return; 
+        if (player.getPlayerState() === 1) { player.pauseVideo(); document.getElementById('master-play').textContent = '▶'; } 
+        else { player.playVideo(); document.getElementById('master-play').textContent = '⏸'; } 
+    }
+    
     function nextSong() { currentIdx = repeat ? currentIdx : (currentIdx + 1) % songs.length; playTrack(currentIdx); }
     function prevSong() { currentIdx = (currentIdx - 1 + songs.length) % songs.length; playTrack(currentIdx); }
     function toggleRepeat() { repeat = !repeat; document.getElementById('repeat-btn').classList.toggle('active', repeat); }
