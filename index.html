@@ -8,17 +8,22 @@
         :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --glass: rgba(255, 255, 255, 0.05); }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .dashboard { width: 100%; max-width: 850px; background: var(--panel); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        .dashboard { width: 100%; max-width: 850px; background: var(--panel); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        
+        /* RESPONSIVE LAYOUT */
+        .grid-container { display: grid; grid-template-columns: 1fr 300px; gap: 32px; }
+        @media (max-width: 768px) {
+            .grid-container { grid-template-columns: 1fr; }
+            .player-panel { order: -1; margin-bottom: 20px; }
+        }
         
         .track-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-        .track-item { padding: 16px 20px; background: var(--glass); border-radius: 16px; cursor: pointer; display: flex; align-items: center; transition: 0.3s; }
+        .track-item { padding: 16px 20px; background: var(--glass); border-radius: 16px; cursor: pointer; display: flex; align-items: center; text-align: left; }
         .track-item:hover { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); }
         
         .player-panel { text-align: center; padding: 32px; background: rgba(0,0,0,0.2); border-radius: 20px; }
-        .btn-icon { background: none; border: none; cursor: pointer; color: var(--accent); padding: 10px; border-radius: 50%; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:hover { background: rgba(56, 189, 248, 0.2); transform: scale(1.1); }
+        .btn-icon { background: none; border: none; cursor: pointer; color: var(--accent); padding: 10px; border-radius: 50%; transition: 0.3s; }
         
-        /* Premium Repeat Toggle States */
         #repeat-btn { color: #64748b; }
         #repeat-btn.active { color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
         
@@ -32,14 +37,13 @@
 <body>
 
 <div class="dashboard">
-    <h2 style="margin-bottom: 24px; letter-spacing: -0.5px;">Euberus Cloud Library</h2>
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 32px;">
-        <ul class="track-list" id="playlist"></ul>
+    <h2 style="margin-bottom: 24px;">Euberus Cloud Library</h2>
+    <div class="grid-container">
         <div class="player-panel">
             <div id="current-title" style="margin-bottom: 20px; font-weight: 600; opacity: 0.8;">Select a track</div>
             <button id="master-play" onclick="togglePlayback()">PLAY</button>
             <div style="display: flex; justify-content: center; gap: 30px;">
-                <button class="btn-icon" id="repeat-btn" onclick="toggleRepeat()" title="Toggle Repeat">
+                <button class="btn-icon" id="repeat-btn" onclick="toggleRepeat()">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2v4a2 2 0 0 1-2 2H3M7 22v-4a2 2 0 0 1 2-2h12"/></svg>
                 </button>
                 <button class="btn-icon" onclick="nextSong()">
@@ -47,23 +51,23 @@
                 </button>
             </div>
         </div>
+        <ul class="track-list" id="playlist"></ul>
     </div>
 </div>
 
 <div id="yt-engine"></div>
 
 <script>
-   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I",
-  authDomain: "euberus-sg.firebaseapp.com",
-  databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "euberus-sg",
-  storageBucket: "euberus-sg.firebasestorage.app",
-  messagingSenderId: "320119039235",
-  appId: "1:320119039235:web:875717ac32d9a282507536",
-  measurementId: "G-1YR1QPDPRF"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I",
+        authDomain: "euberus-sg.firebaseapp.com",
+        databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "euberus-sg",
+        storageBucket: "euberus-sg.firebasestorage.app",
+        messagingSenderId: "320119039235",
+        appId: "1:320119039235:web:875717ac32d9a282507536",
+        measurementId: "G-1YR1QPDPRF"
+    };
 
     firebase.initializeApp(firebaseConfig);
     let player, songs = [], currentIdx = 0, repeat = false;
@@ -76,7 +80,8 @@ const firebaseConfig = {
             songs.forEach((s, i) => {
                 const li = document.createElement('li');
                 li.className = 'track-item';
-                li.innerHTML = `<div><strong>${s.title}</strong><br><small style="color:var(--accent)">${s.artist}</small></div>`;
+                // Added overflow/wrapping logic to the inner HTML
+                li.innerHTML = `<div style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis;"><strong>${s.title}</strong><br><small style="color:var(--accent)">${s.artist}</small></div>`;
                 li.onclick = () => playTrack(i);
                 list.appendChild(li);
             });
@@ -96,6 +101,7 @@ const firebaseConfig = {
     }
 
     function togglePlayback() {
+        if (!player) return;
         if (player.getPlayerState() === 1) { player.pauseVideo(); document.getElementById('master-play').textContent = 'PLAY'; }
         else { player.playVideo(); document.getElementById('master-play').textContent = 'PAUSE'; }
     }
