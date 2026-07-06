@@ -10,16 +10,18 @@
         body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
         .dashboard { width: 100%; max-width: 850px; background: var(--panel); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         
+        /* Navigation Bar */
+        .navbar { display: flex; gap: 30px; margin-bottom: 24px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { cursor: pointer; color: #64748b; font-weight: 600; padding: 5px 0; transition: 0.3s; font-size: 14px; }
+        .nav-item.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
         .grid-container { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } .player-panel { order: -1; } }
         
-        /* Search Bar */
         #search-bar { width: 100%; padding: 14px 18px; margin-bottom: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); color: var(--text); font-size: 14px; outline: none; transition: border 0.3s; }
         #search-bar:focus { border-color: var(--accent); }
 
         .track-list { list-style: none; display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        
-        /* Custom Scrollbar for Tracklist */
         .track-list::-webkit-scrollbar { width: 6px; }
         .track-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
@@ -27,7 +29,6 @@
         .track-item:hover { background: rgba(56, 189, 248, 0.05); border: 1px solid var(--accent); transform: translateX(5px); }
         .track-item.active-track { background: rgba(56, 189, 248, 0.1); border-color: var(--accent); }
         
-        /* Equalizer Animation */
         .playing-anim { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
         .bar { width: 4px; background: var(--accent); border-radius: 2px; animation: bounce 1s infinite ease-in-out; }
         .bar:nth-child(1) { animation-delay: 0s; }
@@ -47,11 +48,9 @@
         .btn-main:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
         .btn-ctrl.active { color: var(--accent); border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
         
-        /* Progress Bar */
         #progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 30px; cursor: pointer; position: relative; overflow: hidden; }
         #progress-bar { height: 100%; background: var(--accent); width: 0%; border-radius: 4px; transition: width 0.2s linear; pointer-events: none; }
         #time-display { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 8px; font-weight: 500; }
-
         #yt-engine { position: absolute; left: -9999px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -61,20 +60,22 @@
 <body>
 
 <div class="dashboard">
-    <h2 style="margin-bottom: 24px;">Euberus Cloud Library</h2>
+    <h2 style="margin-bottom: 24px;">Euberus Premium Stream</h2>
+    <div class="navbar">
+        <div class="nav-item active" id="nav-music" onclick="switchTab('songs', 'nav-music')">Music</div>
+        <div class="nav-item" id="nav-movies" onclick="switchTab('movies', 'nav-movies')">Movies & TV Series</div>
+    </div>
+    
     <div class="grid-container">
         <div class="player-panel">
             <div id="status-indicator">Ready</div>
-            <div id="current-title" style="margin-bottom: 25px; font-weight: 600; font-size: 1.1em; color: var(--accent);">Select a track</div>
-            
+            <div id="current-title" style="margin-bottom: 25px; font-weight: 600; font-size: 1.1em; color: var(--accent);">Select content</div>
             <div class="controls-row">
                 <button class="btn-ctrl" onclick="prevSong()">⏮</button>
                 <button class="btn-main" id="master-play" onclick="togglePlayback()">▶</button>
                 <button class="btn-ctrl" onclick="nextSong()">⏭</button>
                 <button class="btn-ctrl" id="repeat-btn" onclick="toggleRepeat()">R</button>
             </div>
-
-            <!-- Progress Bar -->
             <div id="progress-container" onclick="seekTrack(event)">
                 <div id="progress-bar"></div>
             </div>
@@ -85,8 +86,7 @@
         </div>
         
         <div>
-            <!-- Search Bar -->
-            <input type="text" id="search-bar" placeholder="Search tracks or artists..." onkeyup="filterTracks()">
+            <input type="text" id="search-bar" placeholder="Search..." onkeyup="filterTracks()">
             <ul class="track-list" id="playlist"></ul>
         </div>
     </div>
@@ -101,23 +101,29 @@
 <script>
     const firebaseConfig = { apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I", authDomain: "euberus-sg.firebaseapp.com", databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "euberus-sg", storageBucket: "euberus-sg.firebasestorage.app", messagingSenderId: "320119039235", appId: "1:320119039235:web:875717ac32d9a282507536" };
     firebase.initializeApp(firebaseConfig);
-    let player, songs = [], currentIdx = 0, repeat = false, progressInterval;
+    let player, items = [], currentIdx = 0, repeat = false, progressInterval, currentPath = 'songs';
 
-    firebase.database().ref('songs').on('value', snapshot => {
-        const data = snapshot.val();
-        const list = document.getElementById('playlist');
-        list.innerHTML = ''; 
-        if(data) {
-            songs = Object.values(data);
-            songs.forEach((s, i) => {
+    function switchTab(path, navId) {
+        currentPath = path;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(navId).classList.add('active');
+        loadData();
+    }
+
+    function loadData() {
+        firebase.database().ref(currentPath).on('value', snapshot => {
+            const data = snapshot.val();
+            const list = document.getElementById('playlist');
+            list.innerHTML = ''; 
+            items = data ? Object.values(data) : [];
+            items.forEach((s, i) => {
                 const li = document.createElement('li');
                 li.className = 'track-item';
                 li.id = 'track-item-' + i;
-                // Added structure for the animation container
                 li.innerHTML = `
                     <div style="overflow:hidden; text-overflow:ellipsis;">
                         <strong>${s.title}</strong><br>
-                        <small style="color:#94a3b8;">${s.artist}</small>
+                        <small style="color:#94a3b8;">${s.artist || 'Library'}</small>
                     </div>
                     <div class="anim-container"></div>
                 `;
@@ -125,113 +131,56 @@
                 list.appendChild(li);
             });
             updateActiveTrackUI();
-        }
-    });
-
-    function filterTracks() {
-        const query = document.getElementById('search-bar').value.toLowerCase();
-        const items = document.querySelectorAll('.track-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(query) ? 'flex' : 'none';
         });
     }
 
     function onYouTubeIframeAPIReady() { 
-        player = new YT.Player('yt-engine', { 
-            height: '1', width: '1', 
-            events: { 
-                'onStateChange': e => { 
-                    const status = document.getElementById('status-indicator');
-                    if (e.data === 3) { 
-                        status.textContent = "Buffering..."; status.classList.add('buffering'); 
-                    } else if (e.data === 1) { 
-                        status.textContent = "Streaming Live"; status.classList.remove('buffering'); 
-                        startProgressBar();
-                    } else if (e.data === 2) { 
-                        status.textContent = "Paused"; status.classList.remove('buffering'); 
-                        clearInterval(progressInterval);
-                    } else if (e.data === 0) { 
-                        status.textContent = "Ready"; nextSong(); 
-                    }
-                } 
-            } 
-        }); 
+        player = new YT.Player('yt-engine', { height: '1', width: '1', events: { 'onStateChange': e => { 
+            const status = document.getElementById('status-indicator');
+            if (e.data === 3) { status.textContent = "Buffering..."; status.classList.add('buffering'); }
+            else if (e.data === 1) { status.textContent = "Streaming Live"; status.classList.remove('buffering'); startProgressBar(); }
+            else if (e.data === 2) { status.textContent = "Paused"; status.classList.remove('buffering'); clearInterval(progressInterval); }
+            else if (e.data === 0) { status.textContent = "Ready"; nextSong(); }
+        }}}); 
     }
 
     function playTrack(idx) { 
-        currentIdx = idx; 
-        player.loadVideoById(songs[idx].driveFileId); 
-        player.playVideo(); 
-        document.getElementById('current-title').textContent = songs[idx].title; 
+        currentIdx = idx; player.loadVideoById(items[idx].driveFileId); player.playVideo(); 
+        document.getElementById('current-title').textContent = items[idx].title; 
         document.getElementById('master-play').textContent = '⏸'; 
         updateActiveTrackUI();
     }
     
     function updateActiveTrackUI() {
-        document.querySelectorAll('.track-item').forEach(el => {
-            el.classList.remove('active-track');
-            el.querySelector('.anim-container').innerHTML = '';
-        });
-        
+        document.querySelectorAll('.track-item').forEach(el => { el.classList.remove('active-track'); el.querySelector('.anim-container').innerHTML = ''; });
         const currentLi = document.getElementById('track-item-' + currentIdx);
         if (currentLi) {
             currentLi.classList.add('active-track');
-            currentLi.querySelector('.anim-container').innerHTML = `
-                <div class="playing-anim">
-                    <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                </div>
-            `;
+            currentLi.querySelector('.anim-container').innerHTML = `<div class="playing-anim"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
         }
     }
 
-    function togglePlayback() { 
-        if (!player) return; 
-        if (player.getPlayerState() === 1) { 
-            player.pauseVideo(); document.getElementById('master-play').textContent = '▶'; 
-        } else { 
-            player.playVideo(); document.getElementById('master-play').textContent = '⏸'; 
-        } 
-    }
-    
-    function nextSong() { currentIdx = repeat ? currentIdx : (currentIdx + 1) % songs.length; playTrack(currentIdx); }
-    function prevSong() { currentIdx = (currentIdx - 1 + songs.length) % songs.length; playTrack(currentIdx); }
+    function togglePlayback() { if(player) player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo(); document.getElementById('master-play').textContent = player.getPlayerState() === 1 ? '⏸' : '▶'; }
+    function nextSong() { currentIdx = repeat ? currentIdx : (currentIdx + 1) % items.length; playTrack(currentIdx); }
+    function prevSong() { currentIdx = (currentIdx - 1 + items.length) % items.length; playTrack(currentIdx); }
     function toggleRepeat() { repeat = !repeat; document.getElementById('repeat-btn').classList.toggle('active', repeat); }
-
-    // Progress Bar Logic
+    function filterTracks() { const q = document.getElementById('search-bar').value.toLowerCase(); document.querySelectorAll('.track-item').forEach(el => el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
+    
     function startProgressBar() {
         clearInterval(progressInterval);
         progressInterval = setInterval(() => {
             if (player && player.getPlayerState() === 1) {
-                const current = player.getCurrentTime();
-                const duration = player.getDuration();
-                const percentage = (current / duration) * 100;
-                
-                document.getElementById('progress-bar').style.width = percentage + '%';
-                document.getElementById('time-current').textContent = formatTime(current);
-                document.getElementById('time-total').textContent = formatTime(duration);
+                const c = player.getCurrentTime(), d = player.getDuration();
+                document.getElementById('progress-bar').style.width = (c / d) * 100 + '%';
+                document.getElementById('time-current').textContent = formatTime(c);
+                document.getElementById('time-total').textContent = formatTime(d);
             }
         }, 500);
     }
+    function formatTime(s) { const m = Math.floor(s/60); const sec = Math.floor(s%60).toString().padStart(2, '0'); return `${m}:${sec}`; }
+    function seekTrack(e) { const r = document.getElementById('progress-container').getBoundingClientRect(); const p = (e.clientX - r.left) / r.width; player.seekTo(p * player.getDuration(), true); }
 
-    function formatTime(seconds) {
-        if (!seconds) return "0:00";
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-        return `${m}:${s}`;
-    }
-
-    function seekTrack(e) {
-        if (!player || !player.getDuration) return;
-        const container = document.getElementById('progress-container');
-        const rect = container.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percentage = clickX / rect.width;
-        const seekTime = percentage * player.getDuration();
-        
-        player.seekTo(seekTime, true);
-        document.getElementById('progress-bar').style.width = (percentage * 100) + '%';
-    }
+    loadData();
 </script>
 </body>
 </html>
