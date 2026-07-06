@@ -9,27 +9,17 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .dashboard { width: 100%; max-width: 850px; background: var(--panel); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        
-        /* Layout */
         .grid-container { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } .player-panel { order: -1; } }
-        
         .track-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-        .track-item { padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
-        .track-item:hover { background: rgba(56, 189, 248, 0.05); border: 1px solid var(--accent); transform: translateX(5px); }
-        
-        .player-panel { text-align: center; padding: 32px; background: rgba(0,0,0,0.2); border-radius: 20px; backdrop-filter: blur(10px); }
-        
-        /* Premium Interactive Row */
+        .track-item { padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 16px; cursor: pointer; transition: all 0.3s; border: 1px solid transparent; }
+        .track-item:hover { border: 1px solid var(--accent); transform: translateX(5px); }
+        .player-panel { text-align: center; padding: 32px; background: rgba(0,0,0,0.2); border-radius: 20px; }
         .controls-row { display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 30px; }
-        .btn-ctrl { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; color: #94a3b8; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-main { background: var(--accent); color: #0f172a; width: 70px; height: 70px; border-radius: 50%; font-size: 28px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
-        
-        /* Interactive States */
-        .btn-ctrl:hover { transform: scale(1.15); background: rgba(56, 189, 248, 0.1); color: var(--accent); border-color: var(--accent); }
-        .btn-main:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
+        .btn-ctrl { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; color: #94a3b8; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .btn-main { background: var(--accent); color: #0f172a; width: 70px; height: 70px; border-radius: 50%; font-size: 28px; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-ctrl:hover { color: var(--accent); border-color: var(--accent); }
         .btn-ctrl.active { color: var(--accent); border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
-        
         #yt-engine { position: absolute; left: -9999px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -37,13 +27,11 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
-
 <div class="dashboard">
     <h2 style="margin-bottom: 24px;">Euberus Cloud Library</h2>
     <div class="grid-container">
         <div class="player-panel">
             <div id="current-title" style="margin-bottom: 25px; font-weight: 600; font-size: 1.1em; color: var(--accent);">Select a track</div>
-            
             <div class="controls-row">
                 <button class="btn-ctrl" onclick="prevSong()">⏮</button>
                 <button class="btn-main" id="master-play" onclick="togglePlayback()">▶</button>
@@ -54,70 +42,35 @@
         <ul class="track-list" id="playlist"></ul>
     </div>
 </div>
-
 <div id="yt-engine"></div>
-
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I",
-        authDomain: "euberus-sg.firebaseapp.com",
-        databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "euberus-sg",
-        storageBucket: "euberus-sg.firebasestorage.app",
-        messagingSenderId: "320119039235",
-        appId: "1:320119039235:web:875717ac32d9a282507536"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I", authDomain: "euberus-sg.firebaseapp.com", databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "euberus-sg", storageBucket: "euberus-sg.firebasestorage.app", messagingSenderId: "320119039235", appId: "1:320119039235:web:875717ac32d9a282507536" };
     firebase.initializeApp(firebaseConfig);
     let player, songs = [], currentIdx = 0, repeat = false;
 
-    firebase.database().ref('songs').once('value', snapshot => {
+    // Real-time listener: Updates UI automatically when data changes
+    firebase.database().ref('songs').on('value', snapshot => {
         const data = snapshot.val();
+        const list = document.getElementById('playlist');
+        list.innerHTML = ''; 
         if(data) {
             songs = Object.values(data);
-            const list = document.getElementById('playlist');
             songs.forEach((s, i) => {
                 const li = document.createElement('li');
                 li.className = 'track-item';
-                li.innerHTML = `<div style="overflow:hidden; text-overflow:ellipsis;"><strong>${s.title}</strong><br><small style="color:#94a3b8;">${s.artist}</small></div>`;
+                li.innerHTML = `<div><strong>${s.title}</strong><br><small style="color:#94a3b8;">${s.artist}</small></div>`;
                 li.onclick = () => playTrack(i);
                 list.appendChild(li);
             });
         }
     });
 
-    function onYouTubeIframeAPIReady() {
-        player = new YT.Player('yt-engine', { height: '1', width: '1', events: { 'onStateChange': e => { if(e.data === 0) nextSong(); } } });
-    }
-
-    function playTrack(idx) {
-        currentIdx = idx;
-        player.loadVideoById(songs[idx].driveFileId);
-        player.playVideo();
-        document.getElementById('current-title').textContent = songs[idx].title;
-        document.getElementById('master-play').textContent = '⏸';
-    }
-
-    function togglePlayback() {
-        if (!player) return;
-        if (player.getPlayerState() === 1) { player.pauseVideo(); document.getElementById('master-play').textContent = '▶'; }
-        else { player.playVideo(); document.getElementById('master-play').textContent = '⏸'; }
-    }
-
-    function nextSong() {
-        currentIdx = repeat ? currentIdx : (currentIdx + 1) % songs.length;
-        playTrack(currentIdx);
-    }
-    
-    function prevSong() {
-        currentIdx = (currentIdx - 1 + songs.length) % songs.length;
-        playTrack(currentIdx);
-    }
-
-    function toggleRepeat() {
-        repeat = !repeat;
-        document.getElementById('repeat-btn').classList.toggle('active', repeat);
-    }
+    function onYouTubeIframeAPIReady() { player = new YT.Player('yt-engine', { height: '1', width: '1', events: { 'onStateChange': e => { if(e.data === 0) nextSong(); } } }); }
+    function playTrack(idx) { currentIdx = idx; player.loadVideoById(songs[idx].driveFileId); player.playVideo(); document.getElementById('current-title').textContent = songs[idx].title; document.getElementById('master-play').textContent = '⏸'; }
+    function togglePlayback() { if (!player) return; if (player.getPlayerState() === 1) { player.pauseVideo(); document.getElementById('master-play').textContent = '▶'; } else { player.playVideo(); document.getElementById('master-play').textContent = '⏸'; } }
+    function nextSong() { currentIdx = repeat ? currentIdx : (currentIdx + 1) % songs.length; playTrack(currentIdx); }
+    function prevSong() { currentIdx = (currentIdx - 1 + songs.length) % songs.length; playTrack(currentIdx); }
+    function toggleRepeat() { repeat = !repeat; document.getElementById('repeat-btn').classList.toggle('active', repeat); }
 </script>
 </body>
 </html>
