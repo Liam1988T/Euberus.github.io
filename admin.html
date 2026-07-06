@@ -2,187 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Song Management Center - Admin Panel</title>
+    <title>Admin Panel</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --panel-color: #1e293b;
-            --accent-color: #38bdf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --danger-color: #ef4444;
-            --modify-color: #f59e0b;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 40px 20px; display: flex; justify-content: center; }
-        
-        .admin-container { width: 100%; max-width: 800px; background-color: var(--panel-color); border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 20px; }
-        
-        h1 { font-size: 22px; color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 5px; }
-        h2 { font-size: 15px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; }
-        
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-        input { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 6px; font-size: 14px; width: 100%; }
-        input:focus { outline: none; border-color: var(--accent-color); }
-        
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
-        button { cursor: pointer; padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-        
-        .btn-primary { background-color: var(--accent-color); color: #0f172a; }
-        .btn-primary:hover { background-color: #7dd3fc; }
-        .btn-secondary { background-color: #334155; color: var(--text-main); }
-        .btn-secondary:hover { background-color: #475569; }
-        .btn-action { padding: 6px 12px; font-size: 13px; color: white; border-radius: 4px; }
-        
-        .track-list { list-style: none; margin-top: 5px; display: flex; flex-direction: column; gap: 10px; }
-        .track-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.02); }
-        .track-meta { color: var(--accent-color); font-size: 13px; font-family: monospace; margin-top: 4px; }
-        .actions-wrapper { display: flex; gap: 8px; }
+        body { background: #0f172a; color: white; padding: 40px; font-family: sans-serif; }
+        .container { max-width: 600px; background: #1e293b; padding: 30px; border-radius: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #0f172a; color: white; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 <body>
-
-<div class="admin-container">
-    <h1>Song Management Center</h1>
-    
-    <form id="track-form" onsubmit="handleFormSubmit(event)">
-        <input type="hidden" id="edit-firebase-key" value="">
-        <input type="hidden" id="edit-track-id" value="">
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label>Song Title</label>
-                <input type="text" id="title" required placeholder="e.g., Summer Chill Melody">
-            </div>
-            <div class="form-group">
-                <label>Artist Name</label>
-                <input type="text" id="artist" required placeholder="e.g., Audio Production">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>YouTube Video ID</label>
-            <input type="text" id="driveFileId" required placeholder="Paste the YouTube video ID string here">
-        </div>
-        <div class="btn-row">
-            <button type="submit" class="btn-primary" id="submit-btn">Save Song Track</button>
-            <button type="button" class="btn-secondary" id="cancel-btn" style="display:none;" onclick="resetFormState()">Cancel Edit</button>
-        </div>
-    </form>
-
-    <h2>Current Loaded Library</h2>
-    <ul class="track-list" id="admin-playlist"></ul>
+<div class="container">
+    <h2>Song Management Center</h2>
+    <input id="title" placeholder="Song Title">
+    <input id="artist" placeholder="Artist Name">
+    <input id="id" placeholder="YouTube Video ID">
+    <button onclick="addSong()" style="background: #38bdf8;">Save Song Track</button>
+    <button onclick="publish()" style="background: #10b981;">Publish Library</button>
 </div>
-
 <script>
-    // Live Firebase Credentials
-    const firebaseConfig = {
-        apiKey: "AIzaSyAYnsN9UWtkBxLYTgbe21tpIczGhrni7T8",
-        authDomain: "euberus-ed3b4.firebaseapp.com",
-        databaseURL: "https://euberus-ed3b4-default-rtdb.firebaseio.com",
-        projectId: "euberus-ed3b4",
-        storageBucket: "euberus-ed3b4.firebasestorage.app",
-        messagingSenderId: "206163602431",
-        appId: "1:206163602431:web:70247c1e16d7faae8d95ca",
-        measurementId: "G-KQD0965JJL"
-    };
-
-    // Connect Engine
+    const firebaseConfig = { apiKey: "AIzaSyDDxrxQrl5RxCx902t3tfbxoenxVQ-di9I", authDomain: "euberus-sg.firebaseapp.com", databaseURL: "https://euberus-sg-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "euberus-sg", storageBucket: "euberus-sg.firebasestorage.app", messagingSenderId: "320119039235", appId: "1:320119039235:web:875717ac32d9a282507536" };
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const songsRef = database.ref('songs');
 
-    let songsDatabase = [];
-
-    // Sync state framework snapshot pipeline listener
-    songsRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        songsDatabase = [];
-        if (data) {
-            Object.keys(data).forEach(key => {
-                songsDatabase.push({ firebaseKey: key, ...data[key] });
-            });
-        }
-        renderAdminList();
-    });
-
-    function renderAdminList() {
-        const container = document.getElementById('admin-playlist');
-        container.innerHTML = '';
-        
-        if(songsDatabase.length === 0) {
-            container.innerHTML = `<li style="color: var(--text-muted); font-size: 14px; font-style: italic; padding: 15px; text-align: center;">No tracks found in cloud database.</li>`;
-            return;
-        }
-
-        songsDatabase.forEach((song, index) => {
-            const li = document.createElement('li');
-            li.className = 'track-item';
-            li.innerHTML = `
-                <div>
-                    <strong style="font-size: 15px;">${song.title}</strong> 
-                    <span style="color: var(--text-muted); font-size: 14px;">(${song.artist})</span>
-                    <div class="track-meta">${song.driveFileId}</div>
-                </div>
-                <div class="actions-wrapper">
-                    <button type="button" class="btn-action" style="background-color: var(--modify-color);" onclick="startModify(${index})">Modify</button>
-                    <button type="button" class="btn-action" style="background-color: var(--danger-color);" onclick="deleteSong('${song.firebaseKey}')">Delete</button>
-                </div>
-            `;
-            container.appendChild(li);
-        });
+    function addSong() {
+        const title = document.getElementById('title').value;
+        const artist = document.getElementById('artist').value;
+        const driveFileId = document.getElementById('id').value;
+        firebase.database().ref('songs').push({title, artist, driveFileId});
+        alert("Added!");
     }
 
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const firebaseKey = document.getElementById('edit-firebase-key').value;
-        const trackId = document.getElementById('edit-track-id').value;
-        
-        const songData = {
-            id: firebaseKey ? trackId : "track_" + Date.now(),
-            title: document.getElementById('title').value,
-            artist: document.getElementById('artist').value,
-            driveFileId: document.getElementById('driveFileId').value
-        };
-
-        if (firebaseKey) {
-            songsRef.child(firebaseKey).set(songData).then(() => resetFormState());
-        } else {
-            songsRef.push(songData).then(() => resetFormState());
-        }
-    }
-
-    function startModify(index) {
-        const song = songsDatabase[index];
-        
-        document.getElementById('edit-firebase-key').value = song.firebaseKey;
-        document.getElementById('edit-track-id').value = song.id;
-        document.getElementById('title').value = song.title;
-        document.getElementById('artist').value = song.artist;
-        document.getElementById('driveFileId').value = song.driveFileId;
-        
-        document.getElementById('submit-btn').textContent = "Save Changes";
-        document.getElementById('cancel-btn').style.display = "inline-flex";
-        document.getElementById('title').focus();
-    }
-
-    function resetFormState() {
-        document.getElementById('track-form').reset();
-        document.getElementById('edit-firebase-key').value = "";
-        document.getElementById('edit-track-id').value = "";
-        document.getElementById('submit-btn').textContent = "Save Song Track";
-        document.getElementById('cancel-btn').style.display = "none";
-    }
-
-    function deleteSong(firebaseKey) {
-        if(!confirm("Are you sure you want to completely remove this track from the cloud?")) return;
-        songsRef.child(firebaseKey).remove();
+    function publish() {
+        // This triggers a real-time update event
+        firebase.database().ref('metadata').set({ lastPublished: Date.now() });
+        alert("Library Published! All devices have been updated.");
     }
 </script>
 </body>
